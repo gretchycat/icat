@@ -3,7 +3,7 @@ from PIL import Image
 import sys
 import math
 import os
-mode='8bit' #cga, 8bit, grey, 24bit
+mode='24bit' #cga, 8bit, grey, 24bit
 
 def colordiff(c1, c2):
     return math.sqrt((c2[0]-c1[0])**2+(c2[1]-c1[1])**2+(c2[2]-c1[2])**2)
@@ -72,6 +72,6 @@ for y in range(h):
         else:
             print("\x1b["+c1+"m ",end='')
             c0=c1
-  
+    c0=0 
     print("\x1b[0m")
 img.close()
