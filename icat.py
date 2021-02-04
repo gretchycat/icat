@@ -9,7 +9,7 @@ def term_24bit(c):
     b=int(c[2])
     return "48;2;"+str(r)+";"+str(g)+";"+str(b) 
 
-def term_color(c):
+def term_color(c): #use greys too
     d=256/6
     r=int(c[0]/d)
     g=int(c[1]/d)
@@ -35,13 +35,12 @@ rows,columns = os.popen('stty size', 'r').read().split()
 img = Image.open(sys.argv[1])
 w=int(columns)
 h=int(w*img.height/img.width/2)
-if img.width<w:
-    w=img.width
+if img.width*2<w:
+    w=img.width*2
     h=int(w*img.height/img.width/2)
-else:
-   o=img
-   img=o.resize((w,h))
-   o.close()
+o=img
+img=o.resize((w,h))
+o.close()
 c0=0
 c1=0
 for y in range(h):
@@ -61,5 +60,5 @@ for y in range(h):
             print("\x1b["+c1+"m ",end='')
             c0=c1
   
-    print("")
+    print("\x1b[0m")
 img.close()
