@@ -3,9 +3,9 @@ from PIL import Image
 import sys
 import os
 def term_color(c):
-    r=int(c[0]/42)
-    g=int(c[0]/42)
-    b=int(c[2]/42)
+    r=int(c[0]/51)
+    g=int(c[1]/51)
+    b=int(c[2]/51)
     return b+6*g+36*r+16
 
 rows,columns = os.popen('stty size', 'r').read().split()
