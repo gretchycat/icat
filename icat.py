@@ -32,15 +32,13 @@ def term_16(c): #this is wrong.
     return "48;5;"+str(r+2*g+4*b)
 
 rows,columns = os.popen('stty size', 'r').read().split()
-img = Image.open(sys.argv[1])
 w=int(columns)
-h=int(w*img.height/img.width/2)
-if img.width*2<w:
-    w=img.width*2
-    h=int(w*img.height/img.width/2)
-o=img
-img=o.resize((w,h))
-o.close()
+img0 = Image.open(sys.argv[1])
+if img0.width*2<w:
+    w=img0.width*2
+h=int(w*img0.height/img0.width/2)
+img=img0.resize((w,h))
+img0.close()
 c0=0
 c1=0
 for y in range(h):
