@@ -1,8 +1,13 @@
 #!/usr/bin/python3
 from PIL import Image
 import sys
+import math
 import os
-mode='24bit' #cga, 8bit, grey, 24bit
+mode='8bit' #cga, 8bit, grey, 24bit
+
+def colordiff(c1, c2):
+    return math.sqrt((c2[0]-c1[0])**2+(c2[1]-c1[1])**2+(c2[2]-c1[2])**2)
+
 def term_24bit(c):
     r=int(c[0])
     g=int(c[1])
@@ -10,10 +15,20 @@ def term_24bit(c):
     return "48;2;"+str(r)+";"+str(g)+";"+str(b) 
 
 def term_color(c): #use greys too
-    d=256/6
-    r=int(c[0]/d)
-    g=int(c[1]/d)
-    b=int(c[2]/d)
+    d=40
+    gd=256/24
+    r=int(max(0,c[0]-55)/40)
+    g=int(max(0,c[1]-55)/40)
+    b=int(max(0,c[2]-55)/40)
+    rg=int(c[0]/gd)
+    gg=int(c[1]/gd)
+    bg=int(c[2]/gd)
+    v=int((rg+gg+bg)/3)
+    #is grey closer? or color
+    dc=colordiff(c, (r*d, g*d, b*d))
+    dg=colordiff(c, (v*gd, v*gd, v*gd))
+    if (dg*3)<dc:
+        return "48;5;"+str(v+232)
     return "48;5;"+str(b+6*g+36*r+16)
 
 def term_grey(c):
@@ -25,11 +40,11 @@ def term_grey(c):
     return "48;5;"+str(v+232)
 
 def term_16(c): #this is wrong.
-    d=256/3
+    d=256/2
     r=int(c[0]/d)
     g=int(c[1]/d)
     b=int(c[2]/d)
-    return "48;5;"+str(r+2*g+4*b)
+    return str(40+r+2*g+4*b)
 
 rows,columns = os.popen('stty size', 'r').read().split()
 w=int(columns)
