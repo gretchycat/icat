@@ -18,8 +18,16 @@ h=int(w*img.height/img.width/2)
 print(columns, h)
 rimg=img.resize((w,h))
 img.close()
+c0=0
+c1=0
 for y in range(h):
     for x in range(w):
         p=rimg.getpixel((x,y))
-        print("\x1b[48;5;{0}m ".format(term_color(p)),end='')
+        c1=term_color(p)
+        if (c0==c1):
+            print(" ",end='')
+        else:
+            print("\x1b[48;5;{0}m ".format(c1),end='')
+            c0=c1
+  
     print("")
