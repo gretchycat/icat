@@ -2,19 +2,19 @@
 from PIL import Image
 import sys
 import os
-colorbits=24
+mode='24bit' #cga, 8bit, grey, 24bit
 def term_24bit(c):
     r=int(c[0])
     g=int(c[1])
     b=int(c[2])
-    return str(r)+";"+str(g)+";"+str(b) 
+    return "48;2;"+str(r)+";"+str(g)+";"+str(b) 
 
 def term_color(c):
     d=256/6
     r=int(c[0]/d)
     g=int(c[1]/d)
     b=int(c[2]/d)
-    return b+6*g+36*r+16
+    return "48;5;"+str(b+6*g+36*r+16)
 
 def term_grey(c):
     d=256/24
@@ -22,39 +22,44 @@ def term_grey(c):
     g=int(c[1]/d)
     b=int(c[2]/d)
     v=int((r+g+b)/3)
-    return v+232
+    return "48;5;"+str(v+232)
 
 def term_16(c): #this is wrong.
     d=256/3
     r=int(c[0]/d)
     g=int(c[1]/d)
     b=int(c[2]/d)
-    return r+2*g+4*b
+    return "48;5;"+str(r+2*g+4*b)
 
 rows,columns = os.popen('stty size', 'r').read().split()
-print(columns,rows)
-w=int(columns)
-print(sys.argv)
 img = Image.open(sys.argv[1])
-print(img.width,img.height)
+w=int(columns)
 h=int(w*img.height/img.width/2)
-print(columns, h)
-rimg=img.resize((w,h))
-img.close()
+if img.width<w:
+    w=img.width
+    h=int(w*img.height/img.width/2)
+else:
+   o=img
+   img=o.resize((w,h))
+   o.close()
 c0=0
 c1=0
 for y in range(h):
     for x in range(w):
-        p=rimg.getpixel((x,y))
-        c1=term_24bit(p)
+        p=img.getpixel((x,y))
+        if mode=='cga':
+            c1=term_16(p)
+        if mode=='8bit':
+            c1=term_color(p)
+        if mode=='grey':
+            c1=term_grey(p)
+        if mode=='24bit':
+            c1=term_24bit(p)
         if (c0==c1):
             print(" ",end='')
         else:
-            if(colorbits==8):
-                print("\x1b[48;5;{0}m ".format(c1),end='')
-            else: 
-                if(colorbits==24):
-                    print("\x1b[48;2;{0}m ".format(c1),end='')
+            print("\x1b["+c1+"m ",end='')
             c0=c1
   
     print("")
+img.close()
