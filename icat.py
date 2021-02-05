@@ -52,14 +52,14 @@ def term_16(c): #this is wrong.
     r=int(c[0]/d)
     g=int(c[1]/d)
     b=int(c[2]/d)
-    return "\x1b["+str(40+r+2*g+4*b)+"m "+b0
+    return "\x1b["+str(40+r+2*g+4*b)+"m"+b0
 
 def term_8(c): 
     d=256/2
     r=int(c[0]/d)
     g=int(c[1]/d)
     b=int(c[2]/d)
-    return "\x1b["+str(40+r+2*g+4*b)+"m "+b0
+    return "\x1b["+str(40+r+2*g+4*b)+"m"+b0
 
 def term_bw(c):
     r=int(c[0])
