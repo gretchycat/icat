@@ -80,12 +80,14 @@ def term_bw(c):
 rows,columns = os.popen('stty size', 'r').read().split()
 w=int(columns)
 img0 = Image.open(imagefile).convert(mode='RGB')
+resample=3
 if img0.width*2<w:
     w=img0.width*2
+    resample=0
 if forcew>0:
     w=forcew
 h=int(w*img0.height/img0.width/2)
-img=img0.resize((w,h), resample=0)
+img=img0.resize((w,h), resample=resample)
 img0.close()
 c0=0
 c1=0
