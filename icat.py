@@ -3,7 +3,7 @@ from PIL import Image
 from optparse import OptionParser
 import sys, math, os
 
-def colordiff(c1, c2):
+def colordiff(c1, c2):  #compare how close two colors are
     return math.sqrt((c2[0]-c1[0])**2+(c2[1]-c1[1])**2+(c2[2]-c1[2])**2)
 
 def term_24bit(c):
@@ -42,7 +42,30 @@ def term_16(c): #this is wrong.
     r=int(c[0]/d)
     g=int(c[1]/d)
     b=int(c[2]/d)
-    return "\x1b["+str(40+r+2*g+4*b)+"m"+b0
+    rg=int(c[0])
+    gg=int(c[1])
+    bg=int(c[2]) 
+    v=int((rg+gg+bg)/3)
+    c=r+2*g+4*b
+    br=0
+    if c==0 or c==7:
+        if v<64:
+            c=0
+        if v>=64 and v<128:
+            c=0
+            br=1
+        if v>=128 and v<192:
+            c=7
+        if v>=192:
+            c=7
+            br=1
+    else:
+        if v>127:
+            br=1
+    if br==1:
+        return "\x1b[1;"+str(30+c)+"m"+b100
+    else:
+        return "\x1b[0;"+str(40+c)+"m"+b0
 
 def term_8(c): 
     d=256/2
