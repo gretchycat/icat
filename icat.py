@@ -1,17 +1,7 @@
 #!/usr/bin/python3
 from PIL import Image
-import sys
-import math
-import os
-
-imagefile = sys.argv[1]
-mode='24bit' #bw, 3bit, 4bit, 8bit, grey, 24bit
-b0=' '
-b25=u"\u2591"
-b50=u"\u2592"
-b75=u"\u2593"
-b100=u"\u2588"
-forcew=0
+from optparse import OptionParser
+import sys, math, os
 
 def colordiff(c1, c2):
     return math.sqrt((c2[0]-c1[0])**2+(c2[1]-c1[1])**2+(c2[2]-c1[2])**2)
@@ -77,43 +67,60 @@ def term_bw(c):
     else:
         return b100
 
-rows,columns = os.popen('stty size', 'r').read().split()
-w=int(columns)
-img0 = Image.open(imagefile).convert(mode='RGB')
-resample=3
-if img0.width*2<w:
-    w=img0.width*2
-    resample=0
-if forcew>0:
-    w=forcew
-h=int(w*img0.height/img0.width/2)
-img=img0.resize((w,h), resample=resample)
-img0.close()
-c0=0
-c1=0
-for y in range(h):
-    for x in range(w):
-        p=img.getpixel((x,y))
-        if mode=='bw':
-            c1=term_bw(p)
-        if mode=='3bit':
-            c1=term_8(p)
-        if mode=='4bit':
-            c1=term_16(p)
-        if mode=='cga':
-            c1=term_16(p)
-        if mode=='8bit':
-            c1=term_color(p)
-        if mode=='grey':
-            c1=term_grey(p)
-        if mode=='24bit':
-            c1=term_24bit(p)
+def docat(imagefile, mode, forcew):
+    rows,columns = os.popen('stty size', 'r').read().split()
+    w=int(columns)
+    img0 = Image.open(imagefile).convert(mode='RGB')
+    resample=3
+    if img0.width*2<w:
+        w=img0.width*2
+        resample=0
+    if forcew>0:
+        w=forcew
+    h=int(w*img0.height/img0.width/2)
+    img=img0.resize((w,h), resample=resample)
+    img0.close()
+    c0=0
+    c1=0
+    for y in range(h):
+        for x in range(w):
+            p=img.getpixel((x,y))
+            if mode=='bw':
+                c1=term_bw(p)
+            if mode=='3bit':
+                c1=term_8(p)
+            if mode=='4bit':
+                c1=term_16(p)
+            if mode=='cga':
+                c1=term_16(p)
+            if mode=='8bit':
+                c1=term_color(p)
+            if mode=='grey':
+                c1=term_grey(p)
+            if mode=='24bit':
+                c1=term_24bit(p)
 
-        if (c0==c1):
-            print(c1[-1],end='')
-        else:
-            print(c1,end='')
-            c0=c1
-    c0=0 
-    print("\x1b[0m")
-img.close()
+            if (c0==c1):
+                print(c1[-1],end='')
+            else:
+                print(c1,end='')
+                c0=c1
+        c0=0 
+        print("\x1b[0m")
+    img.close()
+
+parser=OptionParser()
+parser.add_option("-m", "--mode", dest="mode", default="24bit", 
+        help="Display mode: 24bit | 8bit | grey | 4bit | 3bit | bw")
+parser.add_option("-w", "--width", dest="width", default="0",
+        help="0=auto, w>0 constrains image to the width")
+(options, args)=parser.parse_args()
+
+b0=' '
+b25=u"\u2591"
+b50=u"\u2592"
+b75=u"\u2593"
+b100=u"\u2588"
+
+for imagefile in args:
+    docat(imagefile, options.mode, int(options.width))
