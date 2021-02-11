@@ -37,7 +37,7 @@ def term_grey(c):
     v=int((r+g+b)/3)
     return "\x1b[48;5;"+str(v+232)+"m"+b0
 
-def term_16(c): #this is wrong.
+def term_16(c):
     d=256/2
     r=int(c[0]/d)
     g=int(c[1]/d)

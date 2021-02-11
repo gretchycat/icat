@@ -1,4 +1,5 @@
 [build-system]
+include = ["icat.py"]
 requires = [
     "pillow",
     "setuptools>=42",
