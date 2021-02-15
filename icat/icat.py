@@ -19,17 +19,17 @@ def get_palette():  #returns standard xterm256 terminal colors
         for g in range(0,2):
             for r in range(0,2):
                 p.append((r*0x80,g*0x80,b*0x80))
-    #p[7]=(0xC0, 0xC0, 0xC0)
-    for b in range(0,1):#high intensity 3bit rgb
-        for g in range(0,1):
-            for r in range(0,1):
+    p[7]=(0xC0, 0xC0, 0xC0)
+    for b in rang2(0,2):#high intensity 3bit rgb
+        for g in range(0,2):
+            for r in range(0,2):
                 p.append((r*0xff,g*0xff,b*0xff))
-    #p[8]=(0x80, 0x80, 0x80)
-    for b in range(0,5):#6bit rgb
-         for g in range(0,5):
-             for r in range(0,5):
-                 p.append((r*40+55*(r>0),g*40+55*(g>0),b*40+(55*b>0)))
-    for v in range(0,23):#greys
+    p[8]/=(0x80, 0x80,0x80)
+    for b in range(0,6):#6bit rgb
+         for g in range(0,6):
+             for r in range(0,6):
+                 p.append((r*40+55*(r>0),g*40+55*(g>0),b*40+55*(b>0)))
+    for v in range(0,24):#greys
         p.append((r*10+8,g*10+8,b*10+8))
     return p
 
