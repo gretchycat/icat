@@ -20,11 +20,11 @@ def get_palette():  #returns standard xterm256 terminal colors
             for r in range(0,2):
                 p.append((r*0x80,g*0x80,b*0x80))
     p[7]=(0xC0, 0xC0, 0xC0)
-    for b in rang2(0,2):#high intensity 3bit rgb
+    for b in range(0,2):#high intensity 3bit rgb
         for g in range(0,2):
             for r in range(0,2):
                 p.append((r*0xff,g*0xff,b*0xff))
-    p[8]/=(0x80, 0x80,0x80)
+    p[8]=(0x80, 0x80,0x80)
     for b in range(0,6):#6bit rgb
          for g in range(0,6):
              for r in range(0,6):
@@ -37,30 +37,55 @@ def term_24bit(c):
     (r,g,b)=c
     return "\x1b[48;2;"+str(r)+";"+str(g)+";"+str(b)+"m"+b0
 
-def term_256(c):
-    gd=256/24
+def term_24bith(c,c2):
+    (r,g,b)=c
+    (r2,g2,b2)=c2
+    if r==r2 and g==g2 and b==b2:
+        return "\x1b[48;2;"+str(r)+";"+str(g)+";"+str(b)+"m"+b0
+    return "\x1b[38;2;"+str(r)+";"+str(g)+";"+str(b)+";48;2;"+str(r2)+";"+str(g2)+";"+str(b2)+"m"+bT
+
+def color_256(c):
     d=40
     r=int(max(0,c[0]-55)/d)
     g=int(max(0,c[1]-55)/d)
     b=int(max(0,c[2]-55)/d)
-    rg=int(c[0]/gd)
-    gg=int(c[1]/gd)
-    bg=int(c[2]/gd)
-    v=int((rg+gg+bg)/3)
+    gd=256/24
+    v=color_grey256(c)
     #is grey closer? or color
     dc=colordiff(c, (r*d+55*(r>0), g*d+55*(g>0), b*d+55*(b>0)))
     dg=colordiff(c, (v*gd, v*gd, v*gd))
     if (dg)<dc:
-        return "\x1b[48;5;"+str(v+232)+"m"+b0
-    return "\x1b[48;5;"+str(b+6*g+36*r+16)+"m"+b0
+        return v+232
+    return b+6*g+36*r+16
 
-def term_grey256(c):    #term_256 greys
+def term_256(c):
+    return "\x1b[48;5;"+str(color_256(c))+"m"+b0
+
+def term_256h(c,c2):
+    cc=color_256(c)
+    cc2=color_256(c2)
+    if cc==cc2: 
+        return "\x1b[48;5;"+str(cc)+"m"+b0
+    else:
+        return "\x1b[38;5;"+str(cc)+";48;5;"+str(cc2)+"m"+bT
+
+def color_grey256(c):
     d=256/24
     r=int(c[0]/d)
     g=int(c[1]/d)
     b=int(c[2]/d)
-    v=int((r+g+b)/3)
-    return "\x1b[48;5;"+str(v+232)+"m"+b0
+    return int((r+g+b)/3)
+ 
+def term_grey256(c):    #term_256 greys
+    return "\x1b[48;5;"+str(color_grey256(c)+232)+"m"+b0
+
+def term_grey256h(c,c2):    #term_256 greys
+    cc=color_grey256(c)
+    cc2=color_grey256(c2)
+    if cc==cc2:
+        return "\x1b[48;5;"+str(cc+232)+"m"+b0
+    else:
+        return "\x1b[38;5;"+str(cc+232)+";48;5;"+str(cc2+232)+"m"+bT
 
 def term_grey16(c):    #term16 greys with semisolids
     (r,g,b)=c
@@ -103,7 +128,7 @@ def term_grey16(c):    #term16 greys with semisolids
             bl=b0
     return "\x1b["+fg+";"+bg+"m"+bl
 
-def term_16(c):
+def color_16(c):
     (rg,gg,bg)=c
     d=256/2
     r=int(rg/d)
@@ -126,17 +151,39 @@ def term_16(c):
     else:   #if we're a color, set brightness
         if v>127:
             br=1
-    if br==1:   #16 color ansi doesnt usually support bright backgrounds
-        return "\x1b[0;1;"+str(30+c)+"m"+b100
-    else:
-        return "\x1b[0;"+str(40+c)+"m"+b0
+    return(c,br)
 
-def term_8(c): 
+def term_16h(c,c2):
+    (cc,br)=color_16(c)
+    (cc2,br2)=color_16(c2)
+    if cc==cc2 and br==br2:
+        return "\x1b[0;"+str(br)+";"+str(30+cc)+"m"+b100
+    if br==1:   #16 color ansi doesnt usually support bright backgrounds
+        return "\x1b[0;1;"+str(30+cc)+";"+str(40+cc2)+"m"+bT
+    if br2==1:
+        return "\x1b[0;1;"+str(30+cc2)+";"+str(40+cc)+"m"+bB
+    else:
+        return "\x1b[0;"+str(40+cc)+"m"+b0
+
+def term_16(c):
+    (cc,br)=color_16(c)
+    if br==1:   #16 color ansi doesnt usually support bright backgrounds
+        return "\x1b[0;1;"+str(30+cc)+"m"+b100
+    else:
+        return "\x1b[0;"+str(40+cc)+"m"+b0
+
+def color_8(c):
     d=256/2
     r=int(c[0]/d)
     g=int(c[1]/d)
     b=int(c[2]/d)
-    return "\x1b["+str(40+r+2*g+4*b)+"m"+b0
+    return r+2*g+4*b
+
+def term_8(c): 
+    return "\x1b["+str(40+color_8(c))+"m"+b0
+
+def term_8h(c, c2): 
+   return "\x1b[0;"+str(40+color_8(c))+";"+str(30+color_8(c2))+"m"+bB
 
 def term_bw(c):
     (r,g,b)=c
@@ -152,7 +199,12 @@ def term_bw(c):
     else:
         return b100
 
-def docat(imagefile, mode, forcew, dither, half):
+def docat(imagefile, mode, forcew, half):
+    H=0
+    if half=='yes' or half=='true':
+        H=1
+    if mode=='bw' or mode=='1bit' or mode=='4bitgrey':
+        H=0
     rows,columns = os.popen('stty size', 'r').read().split()
     w=int(columns)
     img0 = Image.open(imagefile).convert(mode='RGB')
@@ -163,45 +215,74 @@ def docat(imagefile, mode, forcew, dither, half):
     if forcew>0:
         w=forcew
     h=int(w*img0.height/img0.width/2)
-    img=img0.resize((w,h), resample=resample)
+    if H==0:
+        img=img0.resize((w,h), resample=resample)
+    else:
+        img=img0.resize((w,h*2), resample=resample)
     img0.close()
     c0=' '
     c1=' '
     for y in range(h):
         for x in range(w):
-            p=img.getpixel((x,y))
-            if mode=='bw':
+            p=(0,0,0)
+            p2=(0,0,0)
+            if H==0:
+                p=img.getpixel((x,y))
+            else:
+                p=img.getpixel((x,y*2))
+                p2=img.getpixel((x,y*2+1))
+            c1=''
+            if (mode=='1bit' or mode=='bw'):
                 c1=term_bw(p)
-            if mode=='3bit':
-                c1=term_8(p)
-            if mode=='4bit':
-                c1=term_16(p)
-            if mode=='4bitgrey':
-                c1=term_grey16(p)
-            if mode=='8bit':
-                c1=term_256(p)
-            if mode=='grey':
-                c1=term_grey256(p)
-            if mode=='24bit':
-                c1=term_24bit(p)
+            if (mode=='3bit' or mode=='8color'):
+                if H==0:
+                    c1=term_8(p)
+                else:
+                    c1=term_8h(p,p2)
+            if (mode=='4bit' or mode=='16color'):
+                if H==0:
+                    c1=term_16(p)
+                else:
+                    c1=term_16h(p,p2)
+            if (mode=='4bitgrey'):
+                if H==0:
+                    c1=term_grey16(p)
+                else:
+                    c1=term_8h(p,p2)
+            if (mode=='8bit' or mode=='256color'):
+                if H==0:
+                    c1=term_256(p)
+                else:
+                    c1=term_256h(p,p2)
+            if (mode=='8bitgrey' or mode=='grey'):
+                if H==0:
+                    c1=term_grey256(p)
+                else:
+                    c1=term_grey256h(p,p2)
+            if (mode=='24bit' or c1==''):
+                if H==0:
+                    c1=term_24bit(p)
+                else:
+                    c1=term_24bith(p,p2)
             if (c0==c1):
                 print(c1[-1],end='')
             else:
                 print(c1,end='')
                 c0=c1
-        c0=0 
-        print("\x1b[0m")
+        c0=0
+        if mode!='1bit' and mode!='bw':
+            print("\x1b[0m")
+        else:
+            print('')
     img.close()
 
 parser=OptionParser()
 parser.add_option("-m", "--mode", dest="mode", default="24bit", 
-        help="Display mode: 24bit | 8bit | grey | 4bit | 4bitgrey | 3bit | bw")
+        help="Color mode: 24bit | 8bit | 8bitgrey | 4bit | 4bitgrey | 3bit | bw")
 parser.add_option("-w", "--width", dest="width", default="0",
         help="0=auto, w>0 constrains image to the width")
-parser.add_option("-d", "--dither", dest="dither", default="no",
-        help="Dither mode: no | yes")
-parser.add_option("-H", "--halfblock", dest="half", default="none",
-        help="Use half-blocks: none | topbottom | leftright")
+parser.add_option("-H", "--halfblock", dest="half", default="yes",
+        help="Use half-blocks: no | yes")
 parser.add_option("-c", "--charset", dest="charset", default="utf8",
         help="Character set: utf8 | dos | ascii")
 
@@ -238,5 +319,4 @@ if options.charset=="ascii":
     bL='['
     bR=']'
 for imagefile in args:
-    docat(imagefile, options.mode, int(options.width), 
-            options.dither, options.half)
+    docat(imagefile, options.mode, int(options.width), options.half)
