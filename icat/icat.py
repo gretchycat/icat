@@ -92,7 +92,7 @@ def term_grey16(c):    #term16 greys with semisolids
     v=(r+g+b)/3 
     bl='X'
     fg="0;1;31"
-    fg="41"
+    bg="41"
     rough=int(v/(256/3))
     fine=int(v%(256/3)/(256/3/5))
     if(rough==0):
@@ -220,8 +220,7 @@ def docat(imagefile, mode, forcew, half):
     else:
         img=img0.resize((w,h*2), resample=resample)
     img0.close()
-    c0=' '
-    c1=' '
+    (c0,c1)=(' ',' ')
     for y in range(h):
         for x in range(w):
             p=(0,0,0)
@@ -288,35 +287,14 @@ parser.add_option("-c", "--charset", dest="charset", default="utf8",
 
 (options, args)=parser.parse_args()
 # 0%, 25%, 50%, 75% and 100% solid blocks
-b0=' '
-b25=u"\u2591"
-b50=u"\u2592"
-b75=u"\u2593"
-b100=u"\u2588"
+(b0,b25,b50,b75,b100)=(' ',u"\u2591",u"\u2592",u"\u2593",u"\u2588")
 #top, bottom, left and right half block
-bT=u"\u2580"
-bB=u"\u2584"
-bL=u"\u258C"
-bR=u"\u2590"
+(bT,bB,bL,bR)=(u"\u2580",u"\u2584",u"\u258C",u"\u2590")
 if options.charset=="dos":
-    b0=' '
-    b25='\xB0'
-    b50='\xB1'
-    b75='\xB2'
-    b100='\xDB'
-    bT='\xDF'
-    bB='\xDC'
-    bL='\xDD'
-    bR='\xDE'
+    (b0,b25,b50,b75,b100)=(' ','\xB0','\xB1','\xB2','\xDB')
+    (bT,bB,bL,bR)=('\xDF','\xDC','\xDD','\xDE')
 if options.charset=="ascii":
-    b0=' '
-    b25="."
-    b50="="
-    b75="%"
-    b100="#"
-    bT='^'
-    bB='a'
-    bL='['
-    bR=']'
+    (b0,b25,b50,b75,b100)=(' ',',','=','%','#')
+    (bT,bB,bL,bR)=('^','a','[',']')
 for imagefile in args:
     docat(imagefile, options.mode, int(options.width), options.half)
