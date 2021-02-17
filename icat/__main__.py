@@ -295,7 +295,7 @@ def main():
         (b0,b25,b50,b75,b100)=(' ','\xB0','\xB1','\xB2','\xDB')
         (bT,bB,bL,bR)=('\xDF','\xDC','\xDD','\xDE')
     if options.charset=="ascii":
-        (b0,b25,b50,b75,b100)=(' ',',','=','%','#')
+        (b0,b25,b50,b75,b100)=(' ','.','=','%','#')
         (bT,bB,bL,bR)=('^','a','[',']')
     for imagefile in args:
         docat(imagefile, options.mode, int(options.width), options.half)
