@@ -276,7 +276,7 @@ def main():
                 print('')
         img.close()
 
-    parser=OptionParser()
+    parser=OptionParser(usage="usage: %prog [options] filelist")
     parser.add_option("-m", "--mode", dest="mode", default="24bit", 
             help="Color mode: 24bit | 8bit | 8bitgrey | 4bit | 4bitgrey | 3bit | bw")
     parser.add_option("-w", "--width", dest="width", default="0",
@@ -287,6 +287,8 @@ def main():
             help="Character set: utf8 | dos | ascii")
 
     (options, args)=parser.parse_args()
+    if len(args)==0:
+        parser.print_help()
     # 0%, 25%, 50%, 75% and 100% solid blocks
     #top, bottom, left and right half block
     (b0,b25,b50,b75,b100)=(' ',u"\u2591",u"\u2592",u"\u2593",u"\u2588")
@@ -297,6 +299,7 @@ def main():
     if options.charset=="ascii":
         (b0,b25,b50,b75,b100)=(' ','.','=','%','#')
         (bT,bB,bL,bR)=('^','a','[',']')
+    
     for imagefile in args:
         docat(imagefile, options.mode, int(options.width), options.half)
 
