@@ -77,7 +77,7 @@ def main():
         g=int((c[1]-8)/d)
         b=int((c[2]-8)/d)
         v=int((r+g+b)/3)
-        if v<=0:
+        if v<0:
             return 16
         if(v+232>=256):
             return 231
