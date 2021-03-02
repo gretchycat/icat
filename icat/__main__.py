@@ -50,13 +50,14 @@ def main():
         r=int(max(0,c[0]-55)/d)
         g=int(max(0,c[1]-55)/d)
         b=int(max(0,c[2]-55)/d)
-        gd=256/24
-        v=color_grey256(c)
+        gd=10
+        vc=color_grey256(c)
+        v=palette_grey_to_value(vc)
         #is grey closer? or color
         dc=colordiff(c, (r*d+55*(r>0), g*d+55*(g>0), b*d+55*(b>0)))
-        dg=colordiff(c, (v*gd, v*gd, v*gd))
-        if (dg)<dc:
-            return v+232
+        dg=colordiff(c, (v,v,v))
+        if dg<dc:
+            return vc
         return b+6*g+36*r+16
 
     def term_256(c):
@@ -71,22 +72,46 @@ def main():
             return "\x1b[38;5;"+str(cc)+";48;5;"+str(cc2)+"m"+bT
 
     def color_grey256(c):
-        d=256/24
-        r=int(c[0]/d)
-        g=int(c[1]/d)
-        b=int(c[2]/d)
-        return int((r+g+b)/3)
+        d=10
+        r=int((c[0]-8)/d)
+        g=int((c[1]-8)/d)
+        b=int((c[2]-8)/d)
+        v=int((r+g+b)/3)
+        if v<=0:
+            return 16
+        if(v+232>=256):
+            return 231
+        return v+232
+
+    def palette_grey_to_value(g):
+        if g==0:
+            return 0
+        if g==7:
+            return 96
+        if g==8:
+            return 192
+        if g==15:
+            return 255
+        if g>=16 and g<232:
+            if g==16:
+                return 0
+            if g==231:
+                return 255
+            return 0
+        if g<256:
+            return (g-232)*10+8
+        return 0
      
     def term_grey256(c):    #term_256 greys
-        return "\x1b[48;5;"+str(color_grey256(c)+232)+"m"+b0
+        return "\x1b[48;5;"+str(color_grey256(c))+"m"+b0
 
     def term_grey256h(c,c2):    #term_256 greys
         cc=color_grey256(c)
         cc2=color_grey256(c2)
         if cc==cc2:
-            return "\x1b[48;5;"+str(cc+232)+"m"+b0
+            return "\x1b[48;5;"+str(cc)+"m"+b0
         else:
-            return "\x1b[38;5;"+str(cc+232)+";48;5;"+str(cc2+232)+"m"+bT
+            return "\x1b[38;5;"+str(cc)+";48;5;"+str(cc2)+"m"+bT
 
     def term_grey16(c):    #term16 greys with semisolids
         (r,g,b)=c
