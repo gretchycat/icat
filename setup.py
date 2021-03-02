@@ -1,2 +1,3 @@
 import setuptools
-setuptools.setup()
+setuptools.setup(scripts=['bin/icat'])
+
