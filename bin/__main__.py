@@ -316,7 +316,7 @@ def docat(imagefile, mode, forcew, half, charset):
             print('')
     img.close()
 
-def __main__():
+def main():
     parser=OptionParser(usage="usage: %prog [options] filelist")
     parser.add_option("-m", "--mode", dest="mode", default="24bit", 
             help="Color mode: 24bit | 8bit | 8bitgrey | 4bit | 4bitgrey | 3bit | bw")
