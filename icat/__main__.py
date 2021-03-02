@@ -235,9 +235,14 @@ def main():
         w=int(columns)
         img0 = Image.open(imagefile).convert(mode='RGB')
         resample=3
-        if img0.width*2<w:
-            w=img0.width*2
-            resample=0
+        if H==0:
+            if img0.width*2<w:
+                w=img0.width*2
+                resample=0
+        else:
+            if img0.width<w:
+                w=img0.width
+                resample=0
         if forcew>0:
             w=forcew
         h=int(w*img0.height/img0.width/2)
