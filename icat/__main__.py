@@ -301,6 +301,7 @@ def main():
                 print('')
         img.close()
 
+    #TODO: try shlex or argparse instead
     parser=OptionParser(usage="usage: %prog [options] filelist")
     parser.add_option("-m", "--mode", dest="mode", default="24bit", 
             help="Color mode: 24bit | 8bit | 8bitgrey | 4bit | 4bitgrey | 3bit | bw")
@@ -310,7 +311,6 @@ def main():
             help="Use half-blocks: no | yes")
     parser.add_option("-c", "--charset", dest="charset", default="utf8",
             help="Character set: utf8 | dos | ascii")
-
     (options, args)=parser.parse_args()
     if len(args)==0:
         parser.print_help()
@@ -323,7 +323,7 @@ def main():
         (bT,bB,bL,bR)=('\xDF','\xDC','\xDD','\xDE')
     if options.charset=="ascii":
         (b0,b25,b50,b75,b100)=(' ','.','=','%','#')
-        (bT,bB,bL,bR)=('^','a','[',']')
+        (bT,bB,bL,bR)=('^','m','[',']')
     
     for imagefile in args:
         docat(imagefile, options.mode, int(options.width), options.half)
