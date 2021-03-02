@@ -316,23 +316,20 @@ def docat(imagefile, mode, forcew, half, charset):
             print('')
     img.close()
 
-parser=OptionParser(usage="usage: %prog [options] filelist")
-parser.add_option("-m", "--mode", dest="mode", default="24bit", 
-        help="Color mode: 24bit | 8bit | 8bitgrey | 4bit | 4bitgrey | 3bit | bw")
-parser.add_option("-w", "--width", dest="width", default="0",
-        help="0=auto, w>0 constrains image to the width")
-parser.add_option("-H", "--halfblock", dest="half", default="yes",
-        help="Use half-blocks: no | yes")
-parser.add_option("-c", "--charset", dest="charset", default="utf8",
-        help="Character set: utf8 | dos | ascii")
-(options, args)=parser.parse_args()
-if len(args)==0:
-    parser.print_help()
-# 0%, 25%, 50%, 75% and 100% solid blocks
-#top, bottom, left and right half block
-(b0,b25,b50,b75,b100)=(' ',u"\u2591",u"\u2592",u"\u2593",u"\u2588")
-(bT,bB,bL,bR)=(u"\u2580",u"\u2584",u"\u258C",u"\u2590")
-for imagefile in args:
-    docat(imagefile, options.mode, int(options.width), options.half, options.charset)
+def __main__():
+    parser=OptionParser(usage="usage: %prog [options] filelist")
+    parser.add_option("-m", "--mode", dest="mode", default="24bit", 
+            help="Color mode: 24bit | 8bit | 8bitgrey | 4bit | 4bitgrey | 3bit | bw")
+    parser.add_option("-w", "--width", dest="width", default="0",
+            help="0=auto, w>0 constrains image to the width")
+    parser.add_option("-H", "--halfblock", dest="half", default="yes",
+            help="Use half-blocks: no | yes")
+    parser.add_option("-c", "--charset", dest="charset", default="utf8",
+            help="Character set: utf8 | dos | ascii")
+    (options, args)=parser.parse_args()
+    if len(args)==0:
+        parser.print_help()
+    for imagefile in args:
+        docat(imagefile, options.mode, int(options.width), options.half, options.charset)
 
 

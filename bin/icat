@@ -328,10 +328,6 @@ parser.add_option("-c", "--charset", dest="charset", default="utf8",
 (options, args)=parser.parse_args()
 if len(args)==0:
     parser.print_help()
-# 0%, 25%, 50%, 75% and 100% solid blocks
-#top, bottom, left and right half block
-(b0,b25,b50,b75,b100)=(' ',u"\u2591",u"\u2592",u"\u2593",u"\u2588")
-(bT,bB,bL,bR)=(u"\u2580",u"\u2584",u"\u258C",u"\u2590")
 for imagefile in args:
     docat(imagefile, options.mode, int(options.width), options.half, options.charset)
 
