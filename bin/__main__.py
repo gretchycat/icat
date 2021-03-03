@@ -332,4 +332,5 @@ def main():
     for imagefile in args:
         docat(imagefile, options.mode, int(options.width), options.half, options.charset)
 
-
+if __name__ == "__main__" or __name__ == "icat":
+    main()
