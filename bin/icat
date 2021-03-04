@@ -234,7 +234,7 @@ def docat(imagefile, mode, forcew, half, charset):
                 ('bT',"\xdf"),('bB',"\xdc"),('bL',"\xdd"),('bR',"\xde")])
     if charset=="ascii":
         cs=dict([('b0',' '),('b25',"."),
-                ('b50',"="),('b75','%'),('b100','#'),
+                ('b50',"="),('b75','%'),('b100','@'),
                 ('bT',"^"),('bB',"m"),('bL',"["),('bR',"]")])
     H=0
     if half=='yes' or half=='true':
