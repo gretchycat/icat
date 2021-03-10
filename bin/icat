@@ -34,14 +34,14 @@ def get_palette():  #returns standard xterm256 terminal colors
 
 def term_24bit(c,cs):
     (r,g,b)=c
-    return "\x1b[48;2;"+str(r)+";"+str(g)+";"+str(b)+"m"+cs['b0']
+    return "\x1b[38;2;"+str(r)+";"+str(g)+";"+str(b)+"m"+cs['b100']
 
 def term_24bith(c,c2,cs):
     (r,g,b)=c
     (r2,g2,b2)=c2
     if r==r2 and g==g2 and b==b2:
         return "\x1b[48;2;"+str(r)+";"+str(g)+";"+str(b)+"m"+cs['b0']
-    return "\x1b[38;2;"+str(r)+";"+str(g)+";"+str(b)+";48;2;"+str(r2)+";"+str(g2)+";"+str(b2)+"m"+cs['bT']
+    return "\x1b[48;2;"+str(r)+";"+str(g)+";"+str(b)+";38;2;"+str(r2)+";"+str(g2)+";"+str(b2)+"m"+cs['bB']
 
 def color_256(c):
     d=40
@@ -59,15 +59,15 @@ def color_256(c):
     return b+6*g+36*r+16
 
 def term_256(c,cs):
-    return "\x1b[48;5;"+str(color_256(c))+"m"+cs['b0']
+    return "\x1b[38;5;"+str(color_256(c))+"m"+cs['b100']
 
 def term_256h(c,c2,cs):
     cc=color_256(c)
     cc2=color_256(c2)
     if cc==cc2: 
-        return "\x1b[48;5;"+str(cc)+"m"+cs['b0']
+        return "\x1b[38;5;"+str(cc)+"m"+cs['b100']
     else:
-        return "\x1b[38;5;"+str(cc)+";48;5;"+str(cc2)+"m"+cs['bT']
+        return "\x1b[48;5;"+str(cc)+";38;5;"+str(cc2)+"m"+cs['bB']
 
 def color_grey256(c):
     d=10
@@ -101,15 +101,15 @@ def palette_grey_to_value(g):
     return 0
  
 def term_grey256(c):    #term_256 greys
-    return "\x1b[48;5;"+str(color_grey256(c))+"m"+cs['b0']
+    return "\x1b[38;5;"+str(color_grey256(c))+"m"+cs['b100']
 
 def term_grey256h(c,c2,cs):    #term_256 greys
     cc=color_grey256(c)
     cc2=color_grey256(c2)
     if cc==cc2:
-        return "\x1b[48;5;"+str(cc)+"m"+cs['b0']
+        return "\x1b[38;5;"+str(cc)+"m"+cs['b100']
     else:
-        return "\x1b[38;5;"+str(cc)+";48;5;"+str(cc2)+"m"+cs['bT']
+        return "\x1b[48;5;"+str(cc)+";38;5;"+str(cc2)+"m"+cs['bB']
 
 def term_grey16(c,cs):    #term16 greys with semisolids
     (r,g,b)=c
@@ -187,14 +187,14 @@ def term_16h(c,c2,cs):
     elif br2==1:
         return "\x1b[0;1;"+str(30+cc2)+";"+str(40+cc)+"m"+cs['bB']
     else:
-        return "\x1b[0;"+str(40+cc)+"m"+cs['b0']
+        return "\x1b[0;"+str(30+cc)+"m"+cs['b100']
 
 def term_16(c,cs):
     (cc,br)=color_16(c)
     if br==1:   #16 color ansi doesnt usually support bright backgrounds
         return "\x1b[0;1;"+str(30+cc)+"m"+cs['b100']
     else:
-        return "\x1b[0;"+str(40+cc)+"m"+cs['b0']
+        return "\x1b[0;"+str(30+cc)+"m"+cs['b100']
 
 def color_8(c):
     d=256/2
@@ -204,7 +204,7 @@ def color_8(c):
     return r+2*g+4*b
 
 def term_8(c,cs): 
-    return "\x1b["+str(40+color_8(c))+"m"+cs['b0']
+    return "\x1b["+str(30+color_8(c))+"m"+cs['b100']
 
 def term_8h(c, c2,cs): 
    return "\x1b[0;"+str(40+color_8(c))+";"+str(30+color_8(c2))+"m"+cs['bB']
@@ -231,7 +231,7 @@ def docat(imagefile, mode, forcew, half, charset):
         cs=dict([('b0',' '),('b25',"\xB0"),
                 ('b50',"\xB1"),('b75','\xB2'),('b100','\xDB'),
                 ('bT',"\xdf"),('bB',"\xdc"),('bL',"\xdd"),('bR',"\xde")])
-    if charset=="ascii":
+    elif charset=="ascii":
         cs=dict([('b0',' '),('b25',"."),
                 ('b50',"="),('b75','%'),('b100','@'),
                 ('bT',"^"),('bB',"m"),('bL',"["),('bR',"]")])
@@ -302,7 +302,7 @@ def docat(imagefile, mode, forcew, half, charset):
                     c1=term_grey256(p,cs)
                 else:
                     c1=term_grey256h(p,p2,cs)
-            elif (mode=='24bit' or c1==''):
+            if (mode=='24bit' or c1==''):
                 if H==0:
                     c1=term_24bit(p,cs)
                 else:
@@ -342,5 +342,5 @@ if __name__ == "__main__" or __name__ == "icat":
     except ImportError:
         sys.stderr.write("You need to install PIL module !\n")
         sys.exit(2)
-
     main()
+
