@@ -65,7 +65,7 @@ def term_256h(c,c2,cs):
     cc=color_256(c)
     cc2=color_256(c2)
     if cc==cc2: 
-        return "\x1b[38;5;"+str(cc)+"m"+cs['b100']
+        return "\x1b[48;5;"+str(cc)+";38;5;"+str(cc)+"m"+cs['b100']
     else:
         return "\x1b[48;5;"+str(cc)+";38;5;"+str(cc2)+"m"+cs['bB']
 
