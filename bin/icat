@@ -1,6 +1,12 @@
 #!/usr/bin/python3
 from optparse import OptionParser
 import sys, math, os
+#Import PIL package
+try:
+    from PIL import Image
+except ImportError:
+    sys.stderr.write("You need to install PIL module !\n")
+    sys.exit(2)
 
 def colordiff(c1, c2):  #compare how close two colors are
     return math.sqrt((c2[0]-c1[0])**2+(c2[1]-c1[1])**2+(c2[2]-c1[2])**2)
@@ -244,8 +250,8 @@ def docat(imagefile, mode, forcew, half, charset):
     w=int(columns)
     try:
         img0 = Image.open(imagefile).convert(mode='RGB')
-    except:
-        sys.stderr.write("Cannot open image: "+imagefile+" !\n")
+    except Exception as e:
+        sys.stderr.write(str(e)+"\n")
         return
     resample=3
     if H==0:
@@ -335,12 +341,6 @@ def main():
     for imagefile in args:
         docat(imagefile, options.mode, int(options.width), options.half, options.charset)
 
-if __name__ == "__main__" or __name__ == "icat":
-    #Import PIL package
-    try:
-        from PIL import Image
-    except ImportError:
-        sys.stderr.write("You need to install PIL module !\n")
-        sys.exit(2)
+if __name__ == "__main__":
     main()
 
