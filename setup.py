@@ -1,8 +1,10 @@
 #!/usr/bin/python3
 from setuptools import setup, find_packages
+import shutil
 
 with open('README.md') as f:
     long_description = f.read()
+shutil.copyfile('icat/__main__.py', 'icat/icat')
 
 setup(
     name='icat',
