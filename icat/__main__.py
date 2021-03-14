@@ -19,7 +19,7 @@ def main():
     if len(args)==0:
         parser.print_help()
     for imagefile in args:
-        docat(imagefile, options.mode.lower(), int(options.width), str(options.full).lower(), options.charset.lower(), int(options.x), int(options.y))
+        print_image(imagefile, options.mode.lower(), int(options.width), str(options.full).lower(), options.charset.lower(), int(options.x), int(options.y))
 
 if __name__ == "__main__":
     main()

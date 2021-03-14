@@ -38,7 +38,7 @@ def color_256(c):
     gd=10
     vc=color_grey256(c)
     v=palette_grey_to_value(vc)
-    #is grey closer? or color
+    #is grey or color closer?
     dc=colordiff(c, (r*d+55*(r>0), g*d+55*(g>0), b*d+55*(b>0)))
     dg=colordiff(c, (v,v,v))
     if dg<dc:
@@ -230,7 +230,7 @@ except ImportError:
     sys.stderr.write("You need to install PIL module !\n")
     sys.exit(2)
 
-def docat(imagefile, mode, forcew, full, charset, screenx, screeny):
+def print_image(imagefile, mode, forcew, full, charset, screenx, screeny):
     cs=dict([('b0',' '),('b25',u"\u2591"),
         ('b50',u"\u2592"),('b75',u"\u2593"),('b100',u"\u2588"),
         ('bT',u"\u2580"),('bB',u"\u2584"),('bL',u"\u258C"),('bR',u"\u2590")])
