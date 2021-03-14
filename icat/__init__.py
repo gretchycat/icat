@@ -230,7 +230,7 @@ except ImportError:
     sys.stderr.write("You need to install PIL module !\n")
     sys.exit(2)
 
-def docat(imagefile, mode, forcew, full, charset):
+def docat(imagefile, mode, forcew, full, charset, screenx, screeny):
     cs=dict([('b0',' '),('b25',u"\u2591"),
         ('b50',u"\u2592"),('b75',u"\u2593"),('b100',u"\u2588"),
         ('bT',u"\u2580"),('bB',u"\u2584"),('bL',u"\u258C"),('bR',u"\u2590")])
@@ -248,7 +248,13 @@ def docat(imagefile, mode, forcew, full, charset):
     if mode=='bw' or mode=='1bit' or mode=='4bitgrey':
         F=True
     rows,columns = os.popen('stty size', 'r').read().split()
-    w=int(columns)
+    dy=0
+    if screeny>0:
+        dy=screeny
+    dx=0
+    if screenx>0:
+        dx=screenx
+    w=int(columns)-dx
     try:
         img0 = Image.open(imagefile).convert(mode='RGB')
     except Exception as e:
@@ -272,7 +278,11 @@ def docat(imagefile, mode, forcew, full, charset):
         img=img0.resize((w,h*2), resample=resample)
     img0.close()
     (c0,c1)=(' ',' ')
+    if screeny>0:
+        print('\x1b['+str(dy)+';1H', end='')
     for y in range(h):
+        if screenx>0:
+            print('\x1b['+str(dx)+'C', end='')
         for x in range(w):
             p=(0,0,0)
             p2=(0,0,0)

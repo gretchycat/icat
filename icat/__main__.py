@@ -13,11 +13,13 @@ def main():
             help="Only use full blocks")
     parser.add_option("-c", "--charset", dest="charset", default="utf8",
             help="Character set: utf8 | dos | ascii")
+    parser.add_option("-x", '--x', dest="x", default="-1", help="shift the image to X")
+    parser.add_option("-y", '--y', dest="y", default="-1", help="shift the image to Y")
     (options, args)=parser.parse_args()
     if len(args)==0:
         parser.print_help()
     for imagefile in args:
-        docat(imagefile, options.mode.lower(), int(options.width), str(options.full).lower(), options.charset.lower())
+        docat(imagefile, options.mode.lower(), int(options.width), str(options.full).lower(), options.charset.lower(), int(options.x), int(options.y))
 
 if __name__ == "__main__":
     main()
