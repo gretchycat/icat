@@ -1,8 +1,7 @@
 #!/usr/bin/python3
 import os,sys
 from optparse import OptionParser
-from icat import *
-#from icat import ICat 
+from icat import ICat 
 
 def main():
     parser=OptionParser(usage="usage: %prog [options] filelist")
@@ -23,7 +22,6 @@ def main():
     ic=ICat(mode=options.mode.lower(), w=int(options.width), f=options.full, 
             charset=options.charset.lower(), x=int(options.x), y=int(options.y))
     for imagefile in args:
-#        print_image(imagefile, options.mode.lower(), int(options.width), str(options.full).lower(), options.charset.lower(), int(options.x), int(options.y))
         ic.print(imagefile)
 
 if __name__ == "__main__":
