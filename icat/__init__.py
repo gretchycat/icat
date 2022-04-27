@@ -185,7 +185,7 @@ class ICat:
             else:
                 c=fc%8
                 br=int(fc/8)
-                fs=str(br)+';'+str(c+30)
+                fs=str(c+30+br*60)
         if(type(bc) is tuple):
             r,g,b=bc
             bs=f'48;2;{r};{g};{b}'
@@ -194,7 +194,8 @@ class ICat:
                 bs=f'48;5;{bc}'
             else:
                 c=bc%8
-                bs=str(c+40)
+                br=int(bc/8)
+                bs=str(c+40+br*60)
         return (f'\x1b[{fs};{bs}m',same)
 
     def term_print(self, c,c2):
@@ -207,19 +208,19 @@ class ICat:
         (r,g,b)=c
         v=(r+g+b)/3 
         bl='X'
-        fg="0;1;31"
+        fg="0;31"
         bg="41"
         rough=int(v/(256/3))
         fine=int(v%(256/3)/(256/3/5))
         if(rough==0):
             bg="40"
-            fg="0;1;30"
+            fg="90"
         elif(rough==1):
             bg="47"
-            fg="0;1;30"
+            fg="90"
         elif(rough==2):
             bg="47"
-            fg="0;1;37"
+            fg="97"
         if rough==0 or rough==2:
             if fine==0:
                 bl=self.cs['b0']
