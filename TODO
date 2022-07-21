@@ -1,1 +1,3 @@
 • minimize ansi size--- only set bg/fg when they change independently
+• add browse function
+• add 'bright 8bit' mode
