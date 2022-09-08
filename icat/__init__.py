@@ -10,26 +10,20 @@ except ImportError:
 
 
 class ICat:
-    def __init__(self,y=0, x=0, w=0, f=False, mode='24bit', charset='utf8'):
-#        print ('class init: '+str(y)+' '+str(x)+' '+str(w)+' '+str(f)+mode+' '+charset)
+    def __init__(self,y=0, x=0, w=0, f=False, mode='24bit', charset='utf8', browse=False):
         self.w=w
         self.x=x
         self.y=y
         self.f=f
         self.mode=mode
         self.set_charset(charset)
-
     def set_charset(self,charset):
-        if(charset in ('utf8','ascii','dos')):
+        if(charset in ('utf8','ascii')):
             self.charset=charset
             self.cs=dict([('b0',' '),('b25',u"\u2591"),
                 ('b50',u"\u2592"),('b75',u"\u2593"),('b100',u"\u2588"),
                 ('bT',u"\u2580"),('bB',u"\u2584"),('bL',u"\u258C"),('bR',u"\u2590")])
-            if charset=="dos":
-                self.cs=dict([('b0',' '),('b25',"\xB0"),
-                        ('b50',"\xB1"),('b75','\xB2'),('b100','\xDB'),
-                        ('bT',"\xdf"),('bB',"\xdc"),('bL',"\xdd"),('bR',"\xde")])
-            elif charset=="ascii":
+            if charset=="ascii":
                 self.cs=dict([('b0',' '),('b25',"."),
                         ('b50',"="),('b75','%'),('b100','@'),
                         ('bT',"^"),('bB',"m"),('bL',"["),('bR',"]")])
@@ -69,6 +63,8 @@ class ICat:
                 return c
             elif(self.mode=='8bit' or self.mode=='256color'):
                 return self.color_256(c)
+            elif(self.mode=='8bitbright' or self.mode=='256bright'):
+                return self.color_256_bright(c)
             elif(self.mode=='8bitgrey' or self.mode=='grey'):
                 return self.color_grey256(c)
             elif(self.mode=='4bit' or self.mode=='16color'):
@@ -107,20 +103,33 @@ class ICat:
             return (g-232)*10+8
         return 0
 
+    def bright(self, c, br):
+        r=int(c[0]*br)
+        g=int(c[1]*br)
+        b=int(c[2]*br)
+        r=min(r, 255)
+        g=min(g, 255)
+        b=min(b, 255)
+        return [r, g, b]
+
     def color_256(self, c):
         d=40
-        r=int(max(0,c[0]-55)/d)
-        g=int(max(0,c[1]-55)/d)
-        b=int(max(0,c[2]-55)/d)
-        gd=10
+        o=55
+        r=int(max(0,c[0]-o)/d)
+        g=int(max(0,c[1]-o)/d)
+        b=int(max(0,c[2]-o)/d)
+        #is grey or color closer?
         vc=self.color_grey256(c)
         v=self.palette_grey_to_value(vc)
-        #is grey or color closer?
-        dc=self.colordiff(c, (r*d+55*(r>0), g*d+55*(g>0), b*d+55*(b>0)))
+        dc=self.colordiff(c, (r*d+o*(r>0), g*d+o*(g>0), b*d+o*(b>0)))
         dg=self.colordiff(c, (v,v,v))
         if dg<dc:
             return vc
         return b+6*g+36*r+16
+
+    def color_256_bright(self, c):
+        c2=self.bright(c, 1.625)
+        return self.color_256(c2)
 
     def color_grey256(self, c):
         d=10
@@ -258,6 +267,9 @@ class ICat:
             return self.cs['b75']
         else:
             return self.cs['b100']
+
+    def printline(self, img, line):
+        print("-")
 
     def print(self, imagefile):
         F=True
