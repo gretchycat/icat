@@ -24,7 +24,17 @@ def main():
     ic=ICat(mode=options.mode.lower(), w=int(options.width), f=options.full, 
             charset=options.charset.lower(), x=int(options.x), y=int(options.y), browse=options.browse)
     if options.browse:
-        print("browse")
+        cols=3
+        i=0
+        while i<len(args):
+            il=()
+            for c in range(0,cols):
+                if i+c < len(args):
+                    il=il+( args[i+c], )
+                else:
+                    il=il+("",)
+            ic.print(il)
+            i=i+cols
     else:
         for imagefile in args:
             ic.print(imagefile)

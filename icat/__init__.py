@@ -272,6 +272,9 @@ class ICat:
         print("-")
 
     def print(self, imagefile):
+        if type(imagefile) is tuple:
+            print(imagefile)
+            return
         F=True
         if self.f=='yes' or self.f=='true' or self.f==True:
             F=False
