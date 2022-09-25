@@ -8,7 +8,6 @@ except ImportError:
     sys.stderr.write("You need to install PIL module !\n")
     sys.exit(2)
 
-
 class ICat:
     def __init__(self,y=0, x=0, w=0, f=False, mode='24bit', charset='utf8', browse=False):
         self.w=w
@@ -17,6 +16,7 @@ class ICat:
         self.f=f
         self.mode=mode
         self.set_charset(charset)
+
     def set_charset(self,charset):
         if(charset in ('utf8','ascii')):
             self.charset=charset
