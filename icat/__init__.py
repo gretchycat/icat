@@ -268,33 +268,14 @@ class ICat:
         else:
             return self.cs['b100']
 
-    def printline(self, img, line):
-        print("-")
-
-    def print(self, imagefile):
-        if type(imagefile) is tuple:
-            print(imagefile)
-            return
-        F=True
-        if self.f=='yes' or self.f=='true' or self.f==True:
-            F=False
-        if self.mode=='bw' or self.mode=='1bit' or self.mode=='4bitgrey':
-            F=True
-        rows,columns = os.popen('stty size', 'r').read().split()
-        dy=0
-        if self.y>0:
-            dy=self.y
-        dx=0
-        if self.x>0:
-            dx=self.x
-        w=int(columns)-dx
+    def openImage(self, imagefile, w):
         try:
             img0 = Image.open(imagefile).convert(mode='RGB')
         except Exception as e:
             sys.stderr.write(str(e)+"\n")
             return
         resample=3
-        if F:
+        if self.F:
             if img0.width*2<w:
                 w=img0.width*2
                 resample=0
@@ -305,39 +286,66 @@ class ICat:
         if self.w>0:
             w=self.w
         h=int(w*img0.height/img0.width/2)
-        if F:
+        if self.F:
             img=img0.resize((w,h), resample=resample)
         else:
             img=img0.resize((w,h*2), resample=resample)
         img0.close()
+        return (img, w, h)
+
+    def printLine(self, img, w, y):
         (c0,c1)=(' ',' ')
+        for x in range(w):
+            p=(0,0,0)
+            p2=(0,0,0)
+            if self.F:
+                p=img.getpixel((x,y))
+                p2=p
+            else:
+                p=img.getpixel((x,y*2))
+                p2=img.getpixel((x,y*2+1))
+            c1=''
+            if (self.mode=='1bit' or self.mode=='bw'):
+                c1=self.term_bw(p)
+            elif (self.mode=='4bitgrey'):
+                c1=self.term_grey16(p)
+            else:
+                c1=self.term_print(p,p2)
+            if (c0==c1):
+                print(c1[-1],end='')
+            else:
+                print(c1,end='')
+                c0=c1
+
+    def print(self, imagefile):
+        if type(imagefile) is tuple:
+            print(imagefile)
+            return
+
+        self.F=True
+        if self.f=='yes' or self.f=='true' or self.f==True:
+            self.F=False
+        if self.mode=='bw' or self.mode=='1bit' or self.mode=='4bitgrey':
+            self.F=True
+
+        screenrows,screencolumns = os.popen('stty size', 'r').read().split()
+        dy=0
+        if self.y>0:
+            dy=self.y
+        dx=0
+        if self.x>0:
+            dx=self.x
+        w=int(screencolumns)-dx
         if self.y>0:
             print('\x1b['+str(dy)+';1H', end='')
+
+        (img, w, h) = self.openImage(imagefile, w)
+
         for y in range(h):
             if self.x>0:
                 print('\x1b['+str(dx)+'C', end='')
-            for x in range(w):
-                p=(0,0,0)
-                p2=(0,0,0)
-                if F:
-                    p=img.getpixel((x,y))
-                    p2=p
-                else:
-                    p=img.getpixel((x,y*2))
-                    p2=img.getpixel((x,y*2+1))
-                c1=''
-                if (self.mode=='1bit' or self.mode=='bw'):
-                    c1=self.term_bw(p)
-                elif (self.mode=='4bitgrey'):
-                    c1=self.term_grey16(p)
-                else:
-                    c1=self.term_print(p,p2)
-                if (c0==c1):
-                    print(c1[-1],end='')
-                else:
-                    print(c1,end='')
-                    c0=c1
-            c0=0
+            self.printLine(img, w, y)
+
             if self.mode!='1bit' and self.mode!='bw':
                 print("\x1b[0m")
             else:
