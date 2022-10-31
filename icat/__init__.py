@@ -318,9 +318,8 @@ class ICat:
                 c0=c1
 
     def print(self, imagefile):
-        if type(imagefile) is tuple:
-            print(imagefile)
-            return
+        if type(imagefile) is str:
+            imagefile=(imagefile, )
 
         self.F=True
         if self.f=='yes' or self.f=='true' or self.f==True:
@@ -338,17 +337,18 @@ class ICat:
         w=int(screencolumns)-dx
         if self.y>0:
             print('\x1b['+str(dy)+';1H', end='')
+        for i in imagefile:
+            if len(i)>0:
+                (img, w, h) = self.openImage(i, w)
 
-        (img, w, h) = self.openImage(imagefile, w)
+                for y in range(h):
+                    if self.x>0:
+                        print('\x1b['+str(dx)+'C', end='')
+                    self.printLine(img, w, y)
 
-        for y in range(h):
-            if self.x>0:
-                print('\x1b['+str(dx)+'C', end='')
-            self.printLine(img, w, y)
-
-            if self.mode!='1bit' and self.mode!='bw':
-                print("\x1b[0m")
-            else:
-                print('')
-        img.close()
+                    if self.mode!='1bit' and self.mode!='bw':
+                        print("\x1b[0m")
+                    else:
+                        print('')
+                img.close()
 
