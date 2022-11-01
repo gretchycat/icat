@@ -293,21 +293,23 @@ class ICat:
         img0.close()
         return img
 
-    def printLine(self, img, y, maxy):
-        addy=(maxy-img.height)/2
-        y=y-addy
+    def printLine(self, img, y, maxy, imgwidth):
+        if img:
+            addy=(maxy-img.height)/2
+            y=y-addy
         (c0,c1)=(' ',' ')
-        for x in range(img.width):
+        for x in range(imgwidth):
             p=(0,0,0)
             p2=(0,0,0)
-            if(y>=0):
-                if y<img.height:
-                    p=img.getpixel((x,y))
-                    if self.F:
-                        p2=p
-                    else:
-                        if(y+1<img.height):
-                            p2=img.getpixel((x,y+1))
+            if(img):
+                if(y>=0):
+                    if y<img.height:
+                        p=img.getpixel((x,y))
+                        if self.F:
+                            p2=p
+                        else:
+                            if(y+1<img.height):
+                                p2=img.getpixel((x,y+1))
             c1=''
             if (self.mode=='1bit' or self.mode=='bw'):
                 c1=self.term_bw(p)
@@ -357,8 +359,9 @@ class ICat:
         for i in imagefile:
             if len(i)>0:
                 img=self.openImage(i,imgwidth)
-                if img.height>maxy:
-                    maxy=img.height
+                if(img):
+                    if img.height>maxy:
+                        maxy=img.height
                 images=images+(img, )
 
         for y in range(0, maxy, 1 if self.F else 2):
@@ -366,16 +369,20 @@ class ICat:
                 print('\x1b['+str(dx)+'C', end='')
 
             for img in images:
-                self.printLine(img, y, maxy)
+                self.printLine(img, y, maxy, imgwidth)
                 if len(imagefile)>1:
-                    print("\x1b[0m ", end='')
+                    if self.mode!='1bit' and self.mode!='bw':
+                        print("\x1b[0m ", end='')
+                    else:
+                        print(" ", end='')
 
             if self.mode!='1bit' and self.mode!='bw':
                 print("\x1b[0m")
             else:
                 print('')
         for img in images:
-            img.close()
+            if(img):
+                img.close()
         if len(imagefile)>1:
             if self.x>0:
                 print('\x1b['+str(dx)+'C', end='')
