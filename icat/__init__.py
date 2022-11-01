@@ -291,19 +291,23 @@ class ICat:
         else:
             img=img0.resize((w,h*2), resample=resample)
         img0.close()
-        return (img, w, h)
+        return img
 
-    def printLine(self, img, w, y):
+    def printLine(self, img, y, maxy):
+        addy=(maxy-img.height)/2
+        y=y-addy
         (c0,c1)=(' ',' ')
-        for x in range(w):
+        for x in range(img.width):
             p=(0,0,0)
             p2=(0,0,0)
-            if self.F:
-                p=img.getpixel((x,y))
-                p2=p
-            else:
-                p=img.getpixel((x,y*2))
-                p2=img.getpixel((x,y*2+1))
+            if(y>=0):
+                if y<img.height:
+                    p=img.getpixel((x,y))
+                    if self.F:
+                        p2=p
+                    else:
+                        if(y+1<img.height):
+                            p2=img.getpixel((x,y+1))
             c1=''
             if (self.mode=='1bit' or self.mode=='bw'):
                 c1=self.term_bw(p)
@@ -316,6 +320,14 @@ class ICat:
             else:
                 print(c1,end='')
                 c0=c1
+
+    def centertext(self, text, width):
+        add=width-len(text)
+        if add>0:
+            return " "*math.floor(add/2)+text+" "*math.ceil(add/2)
+        if add<0:
+            return text[:width]
+        return text
 
     def print(self, imagefile):
         if type(imagefile) is str:
@@ -337,18 +349,38 @@ class ICat:
         w=int(screencolumns)-dx
         if self.y>0:
             print('\x1b['+str(dy)+';1H', end='')
+        images=()
+        maxy=0
+        imgwidth=int(w/len(imagefile))-(1 if len(imagefile)>1 else 0)
+        if len(imagefile)>1:
+            self.w=imgwidth
         for i in imagefile:
             if len(i)>0:
-                (img, w, h) = self.openImage(i, w)
+                img=self.openImage(i,imgwidth)
+                if img.height>maxy:
+                    maxy=img.height
+                images=images+(img, )
 
-                for y in range(h):
-                    if self.x>0:
-                        print('\x1b['+str(dx)+'C', end='')
-                    self.printLine(img, w, y)
+        for y in range(0, maxy, 1 if self.F else 2):
+            if self.x>0:
+                print('\x1b['+str(dx)+'C', end='')
 
-                    if self.mode!='1bit' and self.mode!='bw':
-                        print("\x1b[0m")
-                    else:
-                        print('')
-                img.close()
+            for img in images:
+                self.printLine(img, y, maxy)
+                if len(imagefile)>1:
+                    print("\x1b[0m ", end='')
+
+            if self.mode!='1bit' and self.mode!='bw':
+                print("\x1b[0m")
+            else:
+                print('')
+        for img in images:
+            img.close()
+        if len(imagefile)>1:
+            if self.x>0:
+                print('\x1b['+str(dx)+'C', end='')
+            for fn in imagefile:
+                print(self.centertext(os.path.basename(fn), imgwidth)+" ", end='')
+            print("")
+            print("")
 

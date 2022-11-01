@@ -13,6 +13,8 @@ def main():
             help="Only use full blocks")
     parser.add_option("-b", "--browse", action="store_true", dest="browse", default=False,
             help="Show images in columns")
+    parser.add_option("-B", "--B", dest="columns" , default="1", 
+            help="number of columns in browse mode")
     parser.add_option("-c", "--charset", dest="charset", default="utf8",
             help="Character set: utf8 | ascii")
     parser.add_option("-x", '--x', dest="x", default="0", help="shift the image to X")
@@ -25,6 +27,8 @@ def main():
             charset=options.charset.lower(), x=int(options.x), y=int(options.y), browse=options.browse)
     if options.browse:
         cols=3
+        if int(options.columns)>1:
+            cols=int(options.columns)
         i=0
         while i<len(args):
             il=()
