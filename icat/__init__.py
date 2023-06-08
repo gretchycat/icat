@@ -270,14 +270,16 @@ class ICat:
         else:
             return self.cs['b100']
 
-    def openImage(self, imagefile, w):
+    def openImage(self, imagefile, lines, columns):
         try:
             img0 = Image.open(imagefile).convert(mode='RGB')
         except Exception as e:
             sys.stderr.write(str(e)+"\n")
             return
         resample=3
-        if self.F:
+        w=self.w
+
+        if self.F:  #if the image is smaller than the terminal
             if img0.width*2<w:
                 w=img0.width*2
                 resample=0
@@ -342,8 +344,8 @@ class ICat:
             self.F=False
         if self.mode=='bw' or self.mode=='1bit' or self.mode=='4bitgrey':
             self.F=True
-
         screenrows,screencolumns = os.popen('stty size', 'r').read().split()
+
         dy=0
         if self.y>0:
             dy=self.y
@@ -355,6 +357,13 @@ class ICat:
             print('\x1b['+str(dy)+';1H', end='')
         images=()
         maxy=0
+        if self.w>0 and self.h>0:
+            pass
+        elif self.w>0:
+            pass
+        elif self.h>0:
+            pass
+ 
         imgwidth=self.w
         if(self.w==0):
             imgwidth=int(w/len(imagefile))-(1 if len(imagefile)>1 else 0)
@@ -362,7 +371,7 @@ class ICat:
                 self.w=imgwidth
         for i in imagefile:
             if len(i)>0:
-                img=self.openImage(i,imgwidth)
+                img=self.openImage(i, screenrows,screencolumns)
                 if(img):
                     if img.height>maxy:
                         maxy=img.height
