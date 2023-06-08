@@ -353,9 +353,11 @@ class ICat:
             print('\x1b['+str(dy)+';1H', end='')
         images=()
         maxy=0
-        imgwidth=int(w/len(imagefile))-(1 if len(imagefile)>1 else 0)
-        if len(imagefile)>1:
-            self.w=imgwidth
+        imgwidth=self.w
+        if(self.w==0):
+            imgwidth=int(w/len(imagefile))-(1 if len(imagefile)>1 else 0)
+            if len(imagefile)>1:
+                self.w=imgwidth
         for i in imagefile:
             if len(i)>0:
                 img=self.openImage(i,imgwidth)
