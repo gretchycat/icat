@@ -9,8 +9,10 @@ except ImportError:
     sys.exit(2)
 
 class ICat:
-    def __init__(self,y=0, x=0, w=0, f=False, mode='24bit', charset='utf8', browse=False):
+    def __init__(self,y=0, x=0, w=0, h=0, zoom='aspect', f=False, mode='24bit', charset='utf8', browse=False):
         self.w=w
+        self.h=h
+        self.zoom=zoom
         self.x=x
         self.y=y
         self.f=f
