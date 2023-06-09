@@ -276,9 +276,34 @@ class ICat:
         except Exception as e:
             sys.stderr.write(str(e)+"\n")
             return
+        if self.w==0:
+            self.w=columns
+        imageAR=img0.height/img0.width
+        termAR=-1
+        if self.w>0 and self.h>0:   #modify width, height, dx, dy etc
+            termAR=self.h/self.w
+            if self.zoom=='aspect':
+                newH=int((self.w*imageAR)/2)
+                newW=int((self.h/imageAR)*2)
+                if newH<=self.h:
+                    self.h=newH
+                if newW<=self.w:
+                    self.w=newW
+                pass
+            elif self.zoom=='fill':
+                pass
+            elif self.zoom=='stretch':
+                #self.h=
+                pass
+            pass
+        elif self.w>0:
+            pass
+        elif self.h>0:
+            pass
+        print(f"{columns}x{lines}  {self.w}x{self.h}  {imageAR}  {termAR}")
         resample=3
         w=self.w
-
+        h=self.h
         if self.F:  #if the image is smaller than the terminal
             if img0.width*2<w:
                 w=img0.width*2
@@ -289,11 +314,14 @@ class ICat:
                 resample=0
         if self.w>0:
             w=self.w
-        h=int(w*img0.height/img0.width/2)
+        if(self.h==0):
+            h=int(w*img0.height/img0.width/2)
+        self.h=h
+        print(f"{columns}x{lines}  {self.w}x{self.h}  {imageAR}")
         if self.F:
-            img=img0.resize((w,h), resample=resample)
+            img=img0.resize((int(w),int(h)), resample=resample)
         else:
-            img=img0.resize((w,h*2), resample=resample)
+            img=img0.resize((int(w),int(h)*2), resample=resample)
         img0.close()
         return img
 
@@ -357,26 +385,20 @@ class ICat:
             print('\x1b['+str(dy)+';1H', end='')
         images=()
         maxy=0
-        if self.w>0 and self.h>0:
-            pass
-        elif self.w>0:
-            pass
-        elif self.h>0:
-            pass
- 
+
         imgwidth=self.w
-        if(self.w==0):
+        if(self.w==0):    #when printing mulyiple images per width, split.
             imgwidth=int(w/len(imagefile))-(1 if len(imagefile)>1 else 0)
             if len(imagefile)>1:
                 self.w=imgwidth
         for i in imagefile:
             if len(i)>0:
-                img=self.openImage(i, screenrows,screencolumns)
+                img=self.openImage(i, int(screenrows), int(screencolumns))
                 if(img):
                     if img.height>maxy:
                         maxy=img.height
                 images=images+(img, )
-
+        imgwidth=self.w
         for y in range(0, maxy, 1 if self.F else 2):
             if self.x>0:
                 print('\x1b['+str(dx)+'C', end='')
