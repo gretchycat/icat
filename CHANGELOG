@@ -1,2 +1,9 @@
+0.25
+*   added height flag to further constrain positioning
+*   added aspect/fill/stretch zoom filter when fully constrained
+
+0.20
+*   added bowse functionality
+
 0.19
 *   use ansi colors 90-97, 100-107 instead of a bold/bright flag
