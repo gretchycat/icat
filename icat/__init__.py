@@ -280,30 +280,31 @@ class ICat:
             self.w=columns
         imageAR=img0.height/img0.width
         termAR=-1
+        termW, termH=self.w,self.h
         cropW, cropH=0,0
-        if self.w>0 and self.h>0:   #modify width, height, dx, dy etc
-            termAR=self.h/self.w
+        if termW>0 and termH>0:   #modify width, height, dx, dy etc
+            termAR=termH/termW
             if self.zoom=='aspect':
-                newH=int((self.w*imageAR)/2)
-                newW=int((self.h/imageAR)*2)
-                if newH<=self.h:
-                    self.h=newH
-                if newW<=self.w:
-                    self.w=newW
+                newH=int((termW*imageAR)/2)
+                newW=int((termH/imageAR)*2)
+                if newH<=termH:
+                    termH=newH
+                if newW<=termW:
+                    termW=newW
             elif self.zoom=='fill':
-                cropW=self.w
-                cropH=self.h
-                newH=int((self.w*imageAR)/2)
-                newW=int((self.h/imageAR)*2)
-                if newH>self.h:
-                    self.h=newH
-                if newW>self.w:
-                    self.w=newW
+                cropW=termW
+                cropH=termH
+                newH=int((termW*imageAR)/2)
+                newW=int((termH/imageAR)*2)
+                if newH>termH:
+                    termH=newH
+                if newW>termW:
+                    termW=newW
             elif self.zoom=='stretch':
                 pass
         resample=3
-        w=self.w
-        h=self.h
+        w=termW
+        h=termH
         if self.F:  #if the image is smaller than the terminal
             if img0.width*2<w:
                 w=img0.width*2
@@ -312,18 +313,18 @@ class ICat:
             if img0.width<w:
                 w=img0.width
                 resample=0
-        if self.w>0:
-            w=self.w
-        if(self.h==0):
+        if termW>0:
+            w=termW
+        if(termH==0):
             h=int(w*img0.height/img0.width/2)
-        self.h=h
+        termH=h
         if self.F:
             img=img0.resize((int(w),int(h)), resample=resample)
         else:
             img=img0.resize((int(w),int(h)*2), resample=resample)
         img0.close()
         if cropW>0 or cropH>0:
-            self.w, self.h=cropW, cropH
+            termW, termH=cropW, cropH
         return img
 
     def printLine(self, img, y, maxy, imgwidth):
