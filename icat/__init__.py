@@ -287,9 +287,9 @@ class ICat:
             if self.zoom=='aspect':
                 newH=int((termW*imageAR)/2)
                 newW=int((termH/imageAR)*2)
-                if newH<=termH:
+                if newH<termH:
                     termH=newH
-                if newW<=termW:
+                if newW<termW:
                     termW=newW
             elif self.zoom=='fill':
                 cropW=termW
@@ -325,14 +325,16 @@ class ICat:
         img0.close()
         if cropW>0 or cropH>0:
             termW, termH=cropW, cropH
-        return img
+        return img, (termW, termH)
 
     def printLine(self, img, y, maxy, imgwidth):
+        if imgwidth>img.width:
+            imgwidth=img.width
         if img:
             addy=(maxy-img.height)/2
             y=y-addy
         (c0,c1)=(' ',' ')
-        for x in range(imgwidth):
+        for x in range((min(imgwidth,imgwidth))):
             p=(0,0,0)
             p2=(0,0,0)
             if(img):
@@ -395,11 +397,11 @@ class ICat:
                 self.w=imgwidth
         for i in imagefile:
             if len(i)>0:
-                img=self.openImage(i, int(screenrows), int(screencolumns))
+                img, (imgwidth,imgheight)=self.openImage(i, int(screenrows), int(screencolumns))
                 if(img):
                     if img.height>maxy:
                         maxy=img.height
-                images=images+(img, )
+                    images=images+(img, )
         imgwidth=self.w
         for y in range(0, maxy, 1 if self.F else 2):
             if self.x>0:
