@@ -334,7 +334,7 @@ class ICat:
             addy=(maxy-img.height)/2
             y=y-addy
         (c0,c1)=(' ',' ')
-        for x in range((min(imgwidth,imgwidth))):
+        for x in range(imgwidth):
             p=(0,0,0)
             p2=(0,0,0)
             if(img):
