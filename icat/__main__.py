@@ -42,11 +42,11 @@ def main():
                     il=il+( args[i+c], )
                 else:
                     il=il+("",)
-            ic.print(il)
+            print(ic.print(il))
             i=i+cols
     else:
         for imagefile in args:
-            ic.print(imagefile)
+            print(ic.print(imagefile))
 
 if __name__ == "__main__":
     main()

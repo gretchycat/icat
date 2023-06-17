@@ -328,6 +328,7 @@ class ICat:
         return img, (termW, termH)
 
     def printLine(self, img, y, maxy, imgwidth):
+        buffer=""
         if imgwidth>img.width:
             imgwidth=img.width
         if img:
@@ -354,10 +355,11 @@ class ICat:
             else:
                 c1=self.term_print(p,p2)
             if (c0==c1):
-                print(c1[-1],end='')
+                buffer+=c1[-1]
             else:
-                print(c1,end='')
+                buffer+=c1
                 c0=c1
+        return buffer
 
     def centertext(self, text, width):
         add=width-len(text)
@@ -368,6 +370,7 @@ class ICat:
         return text
 
     def print(self, imagefile):
+        buffer=""
         if type(imagefile) is str:
             imagefile=(imagefile, )
 
@@ -386,7 +389,7 @@ class ICat:
             dx=self.x
         w=int(screencolumns)-dx
         if self.y>0:
-            print('\x1b['+str(dy)+';1H', end='')
+           buffer+=('\x1b['+str(dy)+';1H')
         images=()
         maxy=0
 
@@ -405,28 +408,27 @@ class ICat:
         imgwidth=self.w
         for y in range(0, maxy, 1 if self.F else 2):
             if self.x>0:
-                print('\x1b['+str(dx)+'C', end='')
+               buffer+=('\x1b['+str(dx)+'C')
 
             for img in images:
-                self.printLine(img, y, maxy, imgwidth)
+                buffer+=(self.printLine(img, y, maxy, imgwidth))
                 if len(imagefile)>1:
                     if self.mode!='1bit' and self.mode!='bw':
-                        print("\x1b[0m ", end='')
+                       buffer+=("\x1b[0m\n")
                     else:
-                        print(" ", end='')
+                       buffer+=("\n")
 
             if self.mode!='1bit' and self.mode!='bw':
-                print("\x1b[0m")
+               buffer+=(F"\x1b[0m\n")
             else:
-                print('')
+               buffer+=(F"\n")
         for img in images:
             if(img):
                 img.close()
         if len(imagefile)>1:
             if self.x>0:
-                print('\x1b['+str(dx)+'C', end='')
+               buffer+=('\x1b['+str(dx)+'C')
             for fn in imagefile:
-                print(self.centertext(os.path.basename(fn), imgwidth)+" ", end='')
-            print("")
-            print("")
+               buffer+=(self.centertext(os.path.basename(fn), imgwidth)+" ")
+        return buffer        
 

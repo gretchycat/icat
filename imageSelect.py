@@ -1,5 +1,5 @@
 #!/usr/bin/python3
-import os,sys
+import os,sys,termios,tty
 from optparse import OptionParser
 from icat import ICat 
 
@@ -13,6 +13,8 @@ parser.add_option("-c", "--charset", dest="charset", default="utf8",
 (options, args)=parser.parse_args()
 
 screenrows, screencolumns = os.popen('stty size', 'r').read().split()
+
+#keymap=[ "\1b[A":"Up", "\e1b[B":"Down" ]
 
 class boxDraw:
     def __init__(self, bgColor='#157', \
@@ -108,12 +110,71 @@ def showImage(image, x=0, y=0, f=True, w=30, h=15):
     ic=ICat(mode=options.mode.lower(), w=int(w), h=int(h), 
             zoom='aspect', f=options.full, charset=options.charset.lower(),
             x=int(x), y=int(y)) 
-    ic.print(image)
+    return ic.print(image)
+
+def convert_to_escape(text):
+    escape_text = ""
+    for char in text:
+        if char.isprintable():
+            escape_text += char
+        else:
+            escape_text += "\\x" + hex(ord(char))[2:]
+    return escape_text
+
+
+def read_keyboard_input():
+    # Get the current settings of the terminal
+    filedescriptors = termios.tcgetattr(sys.stdin)
+
+    # Set the terminal to cooked mode
+    tty.setcbreak(sys.stdin)
+
+    # Read a character from the terminal
+    char = sys.stdin.read(1)
+    buffer=char
+    # Check if the character is an arrow key or a function key
+    if char == "\x1b":
+        # The character is an escape character, so read another character
+        char0 = sys.stdin.read(1)
+        buffer+=char0
+        char = sys.stdin.read(1)
+        buffer+=char
+        
+        # Check if the next character is an arrow key or a function key
+        # Restore the original settings of the terminal
+    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, filedescriptors)
+
+    return buffer
+
+import select
+
+def is_data_available():
+    return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
+
+
+def get_input(stdin_fd):
+    input_string = ""
+    try:
+        # Set the terminal to raw mode
+        while is_data_available():
+            input_string += sys.stdin.read(1)
+
+    finally:
+        pass
+        # Restore the terminal settings
+    return input_string
+
 
 def main():
+    buffer=""
     if len(args)==0:
         parser.print_help()
     else:
+        # Save the current terminal settings
+        stdin_fd = sys.stdin.fileno()
+        old_settings = termios.tcgetattr(stdin_fd)
+#        tty.setraw(stdin_fd) 
+
         cols=3
         rows=3
         selected=int((cols*rows)/2)
@@ -124,21 +185,52 @@ def main():
         ysep=0
         w=int((int(screencolumns)+1-((x0-1)*2)-((cols-1)*xsep))/cols)
         h=int((int(screenrows)+1-((y0-1)*2)-((rows-1)*ysep))/rows)
+ 
+        #stdscr=curses.initscr()
+        #curses.noecho()
+        #curses.raw()
+        #stdscr.keypad(True)
+        #curses.cbreak()
         backBox=boxDraw( bgColor='#157',\
-                chars="\u2588\u2580\u2588\u2588 \u2588\u2588\u2584\u2588",\
-                frameColors=['#5AC', '#38A','#157','#38A', 0, '#046', '#157','#046','#035'])
+                chars="\u2588\u2580\u2588\u2588 \u2588\u2588\u2584\u2588")
+        backBox.tintFrame("#9DF")
         box=boxDraw()
-        print(backBox.draw(1,1, int(screencolumns), int(screenrows)),end='')
-        for x in range(0,cols):
-            for y in range(0,rows):
-                c=x0+(w*x)+(xsep*x)
-                r=y0+(h*y)+(ysep*y)
-                if x+y*cols==selected:
-                    box.tintFrame("#F00")
-                else:
-                    box.unTintFrame()
-                print(box.draw(c,r,w,h),end='')
-                showImage('sampleimage.jpg', x=c, y=r+1, w=w-2, h=h-2)
+        buffer+=(backBox.draw(1,1, int(screencolumns), int(screenrows)))
+        print(buffer,end='')
+        char=''
+        refreshImage=True
+        oy=1
+        while char!='q':
+            buffer=""
+            for x in range(0,cols):
+                for y in range(0,rows):
+                    c=x0+(w*x)+(xsep*x)
+                    r=y0+(h*y)+(ysep*y)
+                    index=x+y*cols
+                    if index==selected:
+                        box.tintFrame("#F00")
+                    else:
+                        box.unTintFrame()
+                    if refreshImage:
+                        buffer+=(box.draw(c,r,w,h))
+                    if index<len(args) and refreshImage:
+                        buffer+=showImage(args[index], x=c, y=r+1, w=w-2, h=h-2)
+            refreshImage=False
+            print(buffer,end='')
+            print(F"\x1b[0;0H",end='')
+            char=read_keyboard_input()
+            #char=get_input(stdin_fd)
+            print(F"\x1b[{oy};0HReturned Char: \"{convert_to_escape(char)}\"     ")
+            oy+=1
+        #stdscr.addstr(buffer)
+        #stdscr.refresh()
+        #curses.getch()
+        #curses.echo()
+        #stdscr.keypad(False)
+        #curses.nocbreak()
+        #curses.endwin()
+        print(F"\x1b[2J")
+        termios.tcsetattr(stdin_fd, termios.TCSADRAIN, old_settings)
 
 if __name__ == "__main__":
     main()
