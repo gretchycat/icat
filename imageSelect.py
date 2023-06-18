@@ -6,10 +6,10 @@ from icat import ICat
 parser=OptionParser(usage="usage: %prog [options] filelist")
 parser.add_option("-m", "--mode", dest="mode", default="24bit", 
         help="Color mode: 24bit | 8bit | 8bitbright | 8bitgrey | 4bit | 4bitgrey | 3bit | bw")
-parser.add_option("-f", "--fullblock", action="store_false", dest="full", default=True,
-        help="Only use full blocks")
 parser.add_option("-c", "--charset", dest="charset", default="utf8",
         help="Character set: utf8 | ascii")
+parser.add_option('-t', '--target', dest='target', default='selected',
+        help='the target filename for the image.')
 (options, args)=parser.parse_args()
 
 screenrows, screencolumns = os.popen('stty size', 'r').read().split()
@@ -123,9 +123,9 @@ class boxDraw:
             self.color(colors[8], self.bgColor)+self.chars[8]
         return buff
 
-def showImage(image, x=0, y=0, f=True, w=30, h=15):
+def showImage(image, x=0, y=0, w=30, h=15):
     ic=ICat(mode=options.mode.lower(), w=int(w), h=int(h), 
-            zoom='aspect', f=options.full, charset=options.charset.lower(),
+            zoom='aspect', f=True, charset=options.charset.lower(),
             x=int(x), y=int(y)) 
     return ic.print(image)
 
@@ -166,6 +166,21 @@ def read_keyboard_input():
 
     key=keymap.get(buffer)
     return key or buffer
+
+from PIL import Image
+
+def copy_image(source_path, destination_path):
+    try:
+        # Open the source image
+        source_image = Image.open(source_path)
+
+        # Save a copy of the source image to the destination path
+        source_image.save(destination_path)
+
+        print(f"Image copied from {source_path} to {destination_path}")
+    except IOError:
+        print(f"Unable to copy image from {source_path} to {destination_path}")
+
 
 
 def main():
@@ -246,6 +261,9 @@ def main():
                     if key=='y' or key=='Y':
                         imagefile=args[selected]
                         print(F"\x1b[Kchose:'{imagefile}'")
+                        print("\x1b[Kwriting target image: "+options.target)
+                        print("\x1b[K",end='')
+                        copy_image(imagefile, options.target)
                         return
                     refresh=True
             while(selected<(x+((page-1))*cols)):
