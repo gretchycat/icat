@@ -14,7 +14,20 @@ parser.add_option("-c", "--charset", dest="charset", default="utf8",
 
 screenrows, screencolumns = os.popen('stty size', 'r').read().split()
 
-#keymap=[ "\1b[A":"Up", "\e1b[B":"Down" ]
+keymap={ "\x1b[A":"Up", "\x1b[B":"Down",\
+         "\x1b[C":"Right", "\x1b[D":"Left",\
+         "\x7f":"Backspace", "\x09":"Tab",\
+         "\x0a":"Enter", "\x1b":"Esc",\
+         "\x1b[H":"Home", "\x1b[F":"End",\
+         "\x1b[5~":"PgUp", "\x1b[6~":"PgDn",\
+         "\x1b[2~":"Ins", "\x1b[3~":"Del",\
+         "\x1bOP":"F1", "\x1bOQ":"F2",\
+         "\x1bOR":"F3", "\x1bOS": "F4",\
+         "\x1b[15~":"F5", "\x1b[17~": "F6",\
+         "\x1b[18~":"F7", "\x1b[19~": "F8",\
+         "\x1b[20~":"F9", "\x1b[21~": "F10",\
+         "\x1b[23~":"F11", "\x1b[24~": "F12",\
+         "\x1b[32~":"SyRq", "\x1b[34~": "Brk" }
 
 class boxDraw:
     def __init__(self, bgColor='#157', \
@@ -85,7 +98,7 @@ class boxDraw:
         buf+=F"\u001b[{y};{x}H"
         return buf
 
-    def draw(self, x, y, w, h):
+    def draw(self, x, y, w, h, fill=True):
         if(w<3): w=3
         if(h<3): h=3
         colors=self.frameColors
@@ -97,9 +110,13 @@ class boxDraw:
             self.color(colors[2], self.bgColor)+self.chars[2]
         for i in range(1,h-1):
             buff+=self.move(x,y+i)+\
-                self.color(colors[3], self.bgColor)+self.chars[3]+\
-                self.color(colors[4], self.bgColor)+self.chars[4]*(w-2)+\
-                self.color(colors[5], self.bgColor)+self.chars[5]
+                self.color(colors[3], self.bgColor)+self.chars[3]
+            if(fill):
+                buff+=self.color(colors[4], self.bgColor)+self.chars[4]*(w-2)
+            else:
+                iw=w-2
+                buff+=F"\x1b[{iw}C"
+            buff+=self.color(colors[5], self.bgColor)+self.chars[5]
         buff+=self.move(x,y+h-1)+\
             self.color(colors[6], self.bgColor)+self.chars[6]+\
             self.color(colors[7], self.bgColor)+self.chars[7]*(w-2)+\
@@ -121,7 +138,6 @@ def convert_to_escape(text):
             escape_text += "\\x" + hex(ord(char))[2:]
     return escape_text
 
-
 def read_keyboard_input():
     # Get the current settings of the terminal
     filedescriptors = termios.tcgetattr(sys.stdin)
@@ -134,35 +150,22 @@ def read_keyboard_input():
     buffer=char
     # Check if the character is an arrow key or a function key
     if char == "\x1b":
-        # The character is an escape character, so read another character
-        char0 = sys.stdin.read(1)
-        buffer+=char0
         char = sys.stdin.read(1)
         buffer+=char
-        
-        # Check if the next character is an arrow key or a function key
-        # Restore the original settings of the terminal
+        if(char=='O'):
+            char = sys.stdin.read(1)
+            buffer+=char
+        elif char=='[':
+            char = sys.stdin.read(1)
+            buffer+=char
+            while char>='0' and char<='9' or char==';':
+                char = sys.stdin.read(1)
+                buffer+=char
+    # Restore the original settings of the terminal
     termios.tcsetattr(sys.stdin, termios.TCSADRAIN, filedescriptors)
 
-    return buffer
-
-import select
-
-def is_data_available():
-    return select.select([sys.stdin], [], [], 0) == ([sys.stdin], [], [])
-
-
-def get_input(stdin_fd):
-    input_string = ""
-    try:
-        # Set the terminal to raw mode
-        while is_data_available():
-            input_string += sys.stdin.read(1)
-
-    finally:
-        pass
-        # Restore the terminal settings
-    return input_string
+    key=keymap.get(buffer)
+    return key or buffer
 
 
 def main():
@@ -186,49 +189,72 @@ def main():
         w=int((int(screencolumns)+1-((x0-1)*2)-((cols-1)*xsep))/cols)
         h=int((int(screenrows)+1-((y0-1)*2)-((rows-1)*ysep))/rows)
  
-        #stdscr=curses.initscr()
-        #curses.noecho()
-        #curses.raw()
-        #stdscr.keypad(True)
-        #curses.cbreak()
         backBox=boxDraw( bgColor='#157',\
                 chars="\u2588\u2580\u2588\u2588 \u2588\u2588\u2584\u2588")
         backBox.tintFrame("#9DF")
         box=boxDraw()
-        buffer+=(backBox.draw(1,1, int(screencolumns), int(screenrows)))
-        print(buffer,end='')
-        char=''
-        refreshImage=True
-        oy=1
-        while char!='q':
+        key=''
+        refresh=True
+        while key!='q' and key!='Esc':
             buffer=""
+            if refresh:
+                buffer+=(backBox.draw(1,1, int(screencolumns), int(screenrows)))
+                drawBoxes=True
+                fillBoxes=True
             for x in range(0,cols):
                 for y in range(0,rows):
                     c=x0+(w*x)+(xsep*x)
                     r=y0+(h*y)+(ysep*y)
-                    index=x+y*cols
+                    index=x+(y+page)*cols
                     if index==selected:
                         box.tintFrame("#F00")
                     else:
                         box.unTintFrame()
-                    if refreshImage:
-                        buffer+=(box.draw(c,r,w,h))
-                    if index<len(args) and refreshImage:
+                    if drawBoxes:
+                        buffer+=(box.draw(c,r,w,h,fillBoxes))
+                    if index<len(args) and refresh:
                         buffer+=showImage(args[index], x=c, y=r+1, w=w-2, h=h-2)
-            refreshImage=False
+            refresh=False
+            drawBoxes=False
+            fillBoxes=False
             print(buffer,end='')
             print(F"\x1b[0;0H",end='')
-            char=read_keyboard_input()
-            #char=get_input(stdin_fd)
-            print(F"\x1b[{oy};0HReturned Char: \"{convert_to_escape(char)}\"     ")
-            oy+=1
-        #stdscr.addstr(buffer)
-        #stdscr.refresh()
-        #curses.getch()
-        #curses.echo()
-        #stdscr.keypad(False)
-        #curses.nocbreak()
-        #curses.endwin()
+            key=read_keyboard_input()
+
+            page0=page
+            if key=="Up":
+                if selected-cols>=0:
+                    selected=selected-cols
+                    drawBoxes=True
+            if key=="Down":
+                if selected+cols<len(args):
+                    selected=selected+cols
+                    drawBoxes=True
+            if key=="Left":
+                if selected%cols>0:
+                    selected=selected-1
+                    drawBoxes=True
+            if key=="Right":
+                if selected%cols<cols-1:
+                    selected=selected+1
+                    drawBoxes=True
+            if key=="Enter":
+                if selected<len(args):
+                    print(showImage(args[selected], w=int(screencolumns), h=int(screenrows))+'-'*(int(screencolumns)))
+                    print("\x1b[KSelect this image? (y/n)")
+                    key=read_keyboard_input()
+                    if key=='y' or key=='Y':
+                        imagefile=args[selected]
+                        print(F"\x1b[Kchose:'{imagefile}'")
+                        return
+                    refresh=True
+            while(selected<(x+((page-1))*cols)):
+                page=page-1
+            while(selected>(x+(y+page)*cols)):
+                page=page+1
+            if(page0!=page):
+                refresh=True
+ 
         print(F"\x1b[2J")
         termios.tcsetattr(stdin_fd, termios.TCSADRAIN, old_settings)
 
