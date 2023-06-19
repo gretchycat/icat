@@ -8,7 +8,7 @@ parser.add_option("-m", "--mode", dest="mode", default="24bit",
         help="Color mode: 24bit | 8bit | 8bitbright | 8bitgrey | 4bit | 4bitgrey | 3bit | bw")
 parser.add_option("-c", "--charset", dest="charset", default="utf8",
         help="Character set: utf8 | ascii")
-parser.add_option('-t', '--target', dest='target', default='selected',
+parser.add_option('-t', '--target', dest='target', default='selected.png',
         help='the target filename for the image.')
 (options, args)=parser.parse_args()
 
@@ -17,7 +17,7 @@ screenrows, screencolumns = os.popen('stty size', 'r').read().split()
 keymap={ "\x1b[A":"Up", "\x1b[B":"Down",\
          "\x1b[C":"Right", "\x1b[D":"Left",\
          "\x7f":"Backspace", "\x09":"Tab",\
-         "\x0a":"Enter", "\x1b":"Esc",\
+         "\x0a":"Enter", "\x1b\x1b":"Esc",\
          "\x1b[H":"Home", "\x1b[F":"End",\
          "\x1b[5~":"PgUp", "\x1b[6~":"PgDn",\
          "\x1b[2~":"Ins", "\x1b[3~":"Del",\
@@ -28,6 +28,25 @@ keymap={ "\x1b[A":"Up", "\x1b[B":"Down",\
          "\x1b[20~":"F9", "\x1b[21~": "F10",\
          "\x1b[23~":"F11", "\x1b[24~": "F12",\
          "\x1b[32~":"SyRq", "\x1b[34~": "Brk" }
+
+import sys
+import termios
+
+def disable_keyboard_echo():
+    # Get the current terminal attributes
+    attributes = termios.tcgetattr(sys.stdin)
+    # Disable echo flag
+    attributes[3] = attributes[3] & ~termios.ECHO
+    # Apply the modified attributes
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
+
+def enable_keyboard_echo():
+    # Get the current terminal attributes
+    attributes = termios.tcgetattr(sys.stdin)
+    # Enable echo flag
+    attributes[3] = attributes[3] | termios.ECHO
+    # Apply the modified attributes
+    termios.tcsetattr(sys.stdin, termios.TCSANOW, attributes)
 
 class boxDraw:
     def __init__(self, bgColor='#157', \
@@ -120,7 +139,7 @@ class boxDraw:
         buff+=self.move(x,y+h-1)+\
             self.color(colors[6], self.bgColor)+self.chars[6]+\
             self.color(colors[7], self.bgColor)+self.chars[7]*(w-2)+\
-            self.color(colors[8], self.bgColor)+self.chars[8]
+            self.color(colors[8], self.bgColor)+self.chars[8]+"\x1b[0m"
         return buff
 
 def showImage(image, x=0, y=0, w=30, h=15):
@@ -173,10 +192,8 @@ def copy_image(source_path, destination_path):
     try:
         # Open the source image
         source_image = Image.open(source_path)
-
         # Save a copy of the source image to the destination path
         source_image.save(destination_path)
-
         print(f"Image copied from {source_path} to {destination_path}")
     except IOError:
         print(f"Unable to copy image from {source_path} to {destination_path}")
@@ -191,8 +208,9 @@ def main():
         # Save the current terminal settings
         stdin_fd = sys.stdin.fileno()
         old_settings = termios.tcgetattr(stdin_fd)
-#        tty.setraw(stdin_fd) 
-
+        disable_keyboard_echo()
+        #start reporting mouse events
+        print("\x1b[?1000h\x1b[?25l",end='')
         cols=3
         rows=3
         selected=int((cols*rows)/2)
@@ -210,7 +228,7 @@ def main():
         box=boxDraw()
         key=''
         refresh=True
-        while key!='q' and key!='Esc':
+        while True:
             buffer=""
             if refresh:
                 buffer+=(backBox.draw(1,1, int(screencolumns), int(screenrows)))
@@ -260,12 +278,15 @@ def main():
                     key=read_keyboard_input()
                     if key=='y' or key=='Y':
                         imagefile=args[selected]
-                        print(F"\x1b[Kchose:'{imagefile}'")
-                        print("\x1b[Kwriting target image: "+options.target)
-                        print("\x1b[K",end='')
+                        print(F"\x1b[Jchose:'{imagefile}'")
+                        print("writing target image: "+options.target)
                         copy_image(imagefile, options.target)
-                        return
+                        break
                     refresh=True
+
+            if key=='q' or key=='Esc' or key=='Q' or key=='Backspace':
+                print("\x1b[2J",end='')
+                break
             while(selected<(x+((page-1))*cols)):
                 page=page-1
             while(selected>(x+(y+page)*cols)):
@@ -273,7 +294,8 @@ def main():
             if(page0!=page):
                 refresh=True
  
-        print(F"\x1b[2J")
+        print(F"\x1b[1000l\x1b[?25h")
+        enable_keyboard_echo()
         termios.tcsetattr(stdin_fd, termios.TCSADRAIN, old_settings)
 
 if __name__ == "__main__":
