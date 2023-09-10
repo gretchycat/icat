@@ -5,8 +5,8 @@ from icat import ICat
 
 def main():
     parser=OptionParser(usage="usage: %prog [options] filelist")
-    parser.add_option("-m", "--mode", dest="mode", default="24bit", 
-            help="Color mode: 24bit | 8bit | 8bitbright | 8bitgrey | 4bit | 4bitgrey | 3bit | bw")
+    parser.add_option("-m", "--mode", dest="mode", default="auto", 
+            help="Color mode: 24bit | 8bit | 8bitbright | 8bitgrey | 4bit | 4bitgrey | 3bit | bw | sixel | kitty | auto")
     parser.add_option("-w", "--width", dest="width", default="0",
             help="0=auto, w>0 constrains image to the width")
     parser.add_option("-H", "--height", dest="height", default="0",
@@ -23,13 +23,14 @@ def main():
             help="Character set: utf8 | ascii")
     parser.add_option("-x", '--x', dest="x", default="0", help="shift the image to X")
     parser.add_option("-y", '--y', dest="y", default="0", help="shift the image to Y")
+    parser.add_option("-P", '--place', dest="place", default=False, action='store_true', help="Use placement mode (don't scroll - for saving a buffer)")
     #ic=import icat.icat()
     (options, args)=parser.parse_args()
     if len(args)==0:
         parser.print_help()
     ic=ICat(mode=options.mode.lower(), w=int(options.width), h=int(options.height), 
             zoom=options.zoom, f=options.full, charset=options.charset.lower(),
-            x=int(options.x), y=int(options.y), browse=options.browse)
+            x=int(options.x), y=int(options.y), browse=options.browse, place=options.place)
     if options.browse:
         cols=3
         if int(options.columns)>1:

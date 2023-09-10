@@ -1,5 +1,5 @@
-import math
-import os,sys
+import math,io,os,sys,sixel,termios,tty,subprocess
+from base64 import standard_b64encode
 from optparse import OptionParser
 #from icat import *
 try:
@@ -9,13 +9,16 @@ except ImportError:
     sys.exit(2)
 
 class ICat:
-    def __init__(self,y=0, x=0, w=0, h=0, zoom='aspect', f=False, mode='24bit', charset='utf8', browse=False):
+    def __init__(self,y=0, x=0, w=0, h=0, zoom='aspect', f=False, mode='24bit', charset='utf8', browse=False, place=True):
         self.w=w
         self.h=h
         self.zoom=zoom
         self.x=x
         self.y=y
         self.f=f
+        self.place=place
+        if mode.lower()=='auto':
+            mode='24bit'
         self.mode=mode
         self.set_charset(charset)
 
@@ -370,65 +373,167 @@ class ICat:
         return text
 
     def print(self, imagefile):
-        buffer=""
-        if type(imagefile) is str:
-            imagefile=(imagefile, )
+        def write_chunked(data, items):
+            def serialize_gr_command(payload, items):
+                cmd = ','.join(f'{k}={v}' for k, v in items.items())
+                ans = []
+                w = ans.append
+                w('\x1b_G'), w(cmd)
+                if payload:
+                    w(';')
+                    w(payload)
+                w('\x1b\\')
+                return ''.join(ans)
+            out=''
+            base64=standard_b64encode(data).decode('ascii')
+            while base64:
+                chunk, base64 = base64[:4096], base64[4096:]
+                m = 1 if base64 else 0
+                items['m']=m
+                out+=(serialize_gr_command(chunk, items ))
+                items.clear()
+            return out
 
-        self.F=True
-        if self.f=='yes' or self.f=='true' or self.f==True:
-            self.F=False
-        if self.mode=='bw' or self.mode=='1bit' or self.mode=='4bitgrey':
+        def get_terminal_size():
+            import array, fcntl, sys, termios
+
+            buf = array.array('H', [0, 0, 0, 0])
+            fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ, buf)
+
+            # Create a dictionary with meaningful keys
+            window_info = {
+                "rows": buf[0],
+                "columns": buf[1],
+                "width": buf[2],
+                "height": buf[3]
+            }
+            return window_info
+
+        def execute_command(command, pipe=None):
+            """
+            Executes a command in the system and logs the command line and output.
+            """
+            try:
+                output=""
+                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+                if pipe:
+                    process.stdin.write(pipe)
+                for line in process.stdout:
+                    #logging.debug(line.rstrip('\n'))
+                    output+=line
+                process.wait()
+                process.output=output
+                return output
+            except Exception as e:
+                return f"Error running: {' '.join(command)}"
+
+        if self.mode in ['kitty', 'sixel']:
+            desc=""
+            #image_size = f'\x1b[8;{h};{w}t'
+            img = Image.open(imagefile)
+            img_w, img_h=img.size
+            img_ar=img_h/img_w
+            term_size=get_terminal_size()
+            cell_w=term_size['width']/term_size['columns']
+            cell_h=term_size['height']/term_size['rows']
+            # Calculate the scaling factor while preserving the aspect ratio
+            w=self.w or term_size['columns']
+            h=self.h or term_size['rows']
+            scale=img_w/w
+            scale2=img_h/((h-1)*2)
+            if scale2>scale:
+                scale=scale2
+            new_h=img_h/scale/2
+            new_w=img_w/scale
+            dx, dy=self.x, self.y
+            pos=""
+            if dx or dy:
+                if dx==0:
+                    dx=1
+                if dy==0:
+                    dy=1
+                pos=f'\x1b[{dy};{dx+1}H'
+
+            if self.mode=="sixel":
+                i=execute_command(['img2sixel', '-w', f'{int((new_w-1)*cell_w)}', '-h', f'{int(new_h*cell_h)}', imagefile])
+                return f"{pos}{i}"
+            elif self.mode=="kitty":
+                img = img.resize((int(new_w*cell_w), int(new_h*cell_h)), Image.LANCZOS)
+                # Generate a PNG stream
+                png_stream = io.BytesIO()
+                img.save(png_stream, format='PNG')
+                png_stream.seek(0)
+                items={"a": "T", "f":100}#, "r":h, "c":w}
+                i=write_chunked(png_stream.getvalue(), items)
+                png_stream.close()
+                return f"{pos}{i}"
+        else:
+            buffer=""
+            if type(imagefile) is str:
+                imagefile=(imagefile, )
+
             self.F=True
-        screenrows,screencolumns = os.popen('stty size', 'r').read().split()
-
-        dy=0
-        if self.y>0:
-            dy=self.y
-        dx=0
-        if self.x>0:
-            dx=self.x
-        w=int(screencolumns)-dx
-        if self.y>0:
-           buffer+=('\x1b['+str(dy)+';1H')
-        images=()
-        maxy=0
-
-        imgwidth=self.w
-        if(self.w==0):    #when printing mulyiple images per width, split.
-            imgwidth=int(w/len(imagefile))-(1 if len(imagefile)>1 else 0)
-            if len(imagefile)>1:
-                self.w=imgwidth
-        for i in imagefile:
-            if len(i)>0:
-                img, (imgwidth,imgheight)=self.openImage(i, int(screenrows), int(screencolumns))
-                if(img):
-                    if img.height>maxy:
-                        maxy=img.height
-                    images=images+(img, )
-        imgwidth=self.w
-        for y in range(0, maxy, 1 if self.F else 2):
+            if self.f=='yes' or self.f=='true' or self.f==True:
+                self.F=False
+            if self.mode=='bw' or self.mode=='1bit' or self.mode=='4bitgrey':
+                self.F=True
+            screenrows,screencolumns = os.popen('stty size', 'r').read().split()
+            scroll_mode= not bool(self.place)
+            dy=0
+            if self.y>0:
+                dy=self.y
+            dx=0
             if self.x>0:
-               buffer+=('\x1b['+str(dx)+'C')
+                dx=self.x
+            w=int(screencolumns)-dx
+            if self.y>0:
+               buffer+=f'\x1b[{dy};{1}H'
+            images=()
+            maxy=0
+            buffer+='\x1b[s'
 
-            for img in images:
-                buffer+=(self.printLine(img, y, maxy, imgwidth))
+            imgwidth=self.w
+            if(self.w==0):    #when printing mulyiple images per width, split.
+                imgwidth=int(w/len(imagefile))-(1 if len(imagefile)>1 else 0)
                 if len(imagefile)>1:
-                    if self.mode!='1bit' and self.mode!='bw':
-                       buffer+=("\x1b[0m\n")
-                    else:
-                       buffer+=("\n")
+                    self.w=imgwidth
+            for i in imagefile:
+                if len(i)>0:
+                    img, (imgwidth,imgheight)=self.openImage(i, int(screenrows), int(screencolumns))
+                    if(img):
+                        if img.height>maxy:
+                            maxy=img.height
+                        images=images+(img, )
+            imgwidth=self.w
+            for y in range(0, maxy, 1 if self.F else 2):
+                if self.x>0:
+                    buffer+=('\x1b['+str(dx)+'C')
 
-            if self.mode!='1bit' and self.mode!='bw':
-               buffer+=(F"\x1b[0m\n")
-            else:
-               buffer+=(F"\n")
-        for img in images:
-            if(img):
-                img.close()
-        if len(imagefile)>1:
-            if self.x>0:
-               buffer+=('\x1b['+str(dx)+'C')
-            for fn in imagefile:
-               buffer+=(self.centertext(os.path.basename(fn), imgwidth)+" ")
-        return buffer        
+                for img in images:
+                    buffer+=(self.printLine(img, y, maxy, imgwidth))
+                    if len(imagefile)>1:
+                        if self.mode!='1bit' and self.mode!='bw':
+                            if scroll_mode:
+                                buffer+='\x1b[0m\n'
+                            else:
+                                buffer+='\n\x1b[u\x1b[B\x1b[s'
+                        else:
+                            buffer+="\n"
+
+                if self.mode!='1bit' and self.mode!='bw':
+                    if scroll_mode:
+                        buffer+='\x1b[0m\n'
+                    else:
+                        buffer+='\x1b[u\x1b[B\x1b[s'
+                else:
+                    buffer+="\n"
+            for img in images:
+                if(img):
+                    img.close()
+            if len(imagefile)>1:
+                if self.x>0:
+                   buffer+=('\x1b['+str(dx)+'C')
+                for fn in imagefile:
+                   buffer+=(self.centertext(os.path.basename(fn), imgwidth)+" ")
+            return buffer        
 
