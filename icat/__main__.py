@@ -13,17 +13,20 @@ def main():
             help="0=auto, h>0 constrains image to the height")
     parser.add_option("-z", "--zoom", dest="zoom", default="aspect",
             help=" when w and h are constrained, zoom to aspect, fill, or stretch")
-    parser.add_option("-f", "--fullblock", action="store_false", dest="full", default=True,
-            help="Only use full blocks")
-    parser.add_option("-b", "--browse", action="store_true", dest="browse", default=False,
-            help="Show images in columns")
+    parser.add_option("-f", "--fullblock", action="store_false", dest="full", 
+            default=True, help="Only use full blocks")
+    parser.add_option("-b", "--browse", action="store_true", dest="browse", 
+            default=False, help="Show images in columns")
     parser.add_option("-B", "--B", dest="columns" , default="1", 
             help="number of columns in browse mode")
     parser.add_option("-c", "--charset", dest="charset", default="utf8",
             help="Character set: utf8 | ascii")
-    parser.add_option("-x", '--x', dest="x", default="0", help="shift the image to X")
-    parser.add_option("-y", '--y', dest="y", default="0", help="shift the image to Y")
-    parser.add_option("-P", '--place', dest="place", default=False, action='store_true', help="Use placement mode (don't scroll - for saving a buffer)")
+    parser.add_option("-x", '--x', dest="x", default="0", 
+            help="shift the image to X")
+    parser.add_option("-y", '--y', dest="y", default="0", 
+            help="shift the image to Y")
+    parser.add_option("-P", '--place', dest="place", default=False, 
+            action='store_true', help="Use placement mode (don't scroll - for saving a buffer)")
     #ic=import icat.icat()
     (options, args)=parser.parse_args()
     if len(args)==0:
@@ -37,13 +40,9 @@ def main():
             cols=int(options.columns)
         i=0
         while i<len(args):
-            il=()
-            for c in range(0,cols):
-                if i+c < len(args):
-                    il=il+( args[i+c], )
-                else:
-                    il=il+("",)
-            print(ic.print(il))
+            from pprint import pprint
+            from icat import get_terminal_size
+            pprint(get_terminal_size())
             i=i+cols
     else:
         for imagefile in args:

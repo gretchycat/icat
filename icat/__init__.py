@@ -8,6 +8,19 @@ except ImportError:
     sys.stderr.write("You need to install PIL module !\n")
     sys.exit(2)
 
+def get_terminal_size():
+    import array, fcntl, sys, termios
+    buf = array.array('H', [0, 0, 0, 0])
+    fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ, buf)
+    # Create a dictionary with meaningful keys
+    window_info = {
+        "rows": buf[0],
+        "columns": buf[1],
+        "width": buf[2],
+        "height": buf[3]
+    }
+    return window_info
+
 class ICat:
     def __init__(self,y=0, x=0, w=0, h=0, zoom='aspect', f=False, mode='24bit', charset='utf8', browse=False, place=True):
         self.w=w
@@ -17,8 +30,21 @@ class ICat:
         self.y=y
         self.f=f
         self.place=place
+        terminfo=get_terminal_size()
+        if terminfo['width']==0:
+            if mode in ['kitty', 'sixel']:
+                mode='4bit'
         if mode.lower()=='auto':
-            mode='24bit'
+            term=os.environ.get('TERM', '')
+            konsole_ver=os.environ.get('KONSOLE_VERSION', '')
+            if terminfo['width']==0:
+                term='4bit'
+            if 'kitty' in term:
+                mode='kitty'
+            elif 'vt340' in term or len(konsole_ver or '')>0:
+                mode='sixel'
+            else:
+                mode='24bit'
         self.mode=mode
         self.set_charset(charset)
 
@@ -393,21 +419,6 @@ class ICat:
                 out+=(serialize_gr_command(chunk, items ))
                 items.clear()
             return out
-
-        def get_terminal_size():
-            import array, fcntl, sys, termios
-
-            buf = array.array('H', [0, 0, 0, 0])
-            fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ, buf)
-
-            # Create a dictionary with meaningful keys
-            window_info = {
-                "rows": buf[0],
-                "columns": buf[1],
-                "width": buf[2],
-                "height": buf[3]
-            }
-            return window_info
 
         def execute_command(command, pipe=None):
             """
