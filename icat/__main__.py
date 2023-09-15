@@ -2,7 +2,7 @@
 import os,sys
 from optparse import OptionParser
 from icat import ICat 
-
+from icat import imageSelect
 def main():
     parser=OptionParser(usage="usage: %prog [options] filelist")
     parser.add_option("-m", "--mode", dest="mode", default="auto", 
@@ -15,8 +15,6 @@ def main():
             help=" when w and h are constrained, zoom to aspect, fill, or stretch")
     parser.add_option("-f", "--fullblock", action="store_false", dest="full", 
             default=True, help="Only use full blocks")
-    parser.add_option("-b", "--browse", action="store_true", dest="browse", 
-            default=False, help="Show images in columns")
     parser.add_option("-B", "--B", dest="columns" , default="1", 
             help="number of columns in browse mode")
     parser.add_option("-c", "--charset", dest="charset", default="utf8",
@@ -27,25 +25,25 @@ def main():
             help="shift the image to Y")
     parser.add_option("-P", '--place', dest="place", default=False, 
             action='store_true', help="Use placement mode (don't scroll - for saving a buffer)")
+    parser.add_option("-b", "--browse", action="store_true", dest="browse", 
+            default=False, help="Show images in columns")
+    parser.add_option('-t', '--target', dest='target', default='selected.png',
+            help='the target filename for the image in browse mode.')
+    parser.add_option('-d', '--describe', dest='describe', default='',
+            help='Text to describe the image in browse mode.')
+ 
     #ic=import icat.icat()
     (options, args)=parser.parse_args()
     if len(args)==0:
         parser.print_help()
-    ic=ICat(mode=options.mode.lower(), w=int(options.width), h=int(options.height), 
-            zoom=options.zoom, f=options.full, charset=options.charset.lower(),
-            x=int(options.x), y=int(options.y), browse=options.browse, place=options.place)
     if options.browse:
-        cols=3
-        if int(options.columns)>1:
-            cols=int(options.columns)
-        i=0
-        while i<len(args):
-            from pprint import pprint
-            from icat import get_terminal_size
-            pprint(get_terminal_size())
-            i=i+cols
+        imgs=imageSelect.imageSelect()
+        imgs.interface(options.target, args, options.describe)
     else:
         for imagefile in args:
+            ic=ICat(mode=options.mode.lower(), w=int(options.width), h=int(options.height), 
+                zoom=options.zoom, f=options.full, charset=options.charset.lower(),
+                x=int(options.x), y=int(options.y), browse=options.browse, place=options.place)
             print(ic.print(imagefile))
 
 if __name__ == "__main__":
