@@ -38,7 +38,7 @@ def main():
         parser.print_help()
     if options.browse:
         imgs=imageSelect.imageSelect()
-        imgs.interface(options.target, args, options.describe)
+        imgs.interface(options.target, args, options.describe, options.mode, options.charset)
     else:
         for imagefile in args:
             ic=ICat(mode=options.mode.lower(), w=int(options.width), h=int(options.height), 
