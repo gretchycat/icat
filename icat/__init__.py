@@ -1,4 +1,4 @@
-import math,io,os,sys,sixel,termios,tty,subprocess
+import math,io,os,sys,termios,tty,subprocess
 from base64 import standard_b64encode
 from optparse import OptionParser
 #from icat import *
@@ -38,7 +38,7 @@ class ICat:
             term=os.environ.get('TERM', '')
             konsole_ver=os.environ.get('KONSOLE_VERSION', '')
             if terminfo['width']==0:
-                term='4bit'
+                mode='4bit'
             if 'kitty' in term:
                 mode='kitty'
             elif 'vt340' in term or len(konsole_ver or '')>0:
@@ -438,10 +438,23 @@ class ICat:
             except Exception as e:
                 return f"Error running: {' '.join(command)}"
 
+        pos=""
+        dx, dy=self.x, self.y
+        if dx or dy:
+            if dx==0:
+                dx=1
+            if dy==0:
+                dy=1
+            pos=f'\x1b[{dy};{dx+1}H'
+
         if self.mode in ['kitty', 'sixel']:
             desc=""
             #image_size = f'\x1b[8;{h};{w}t'
-            img = Image.open(imagefile)
+            imglist=[]
+            try:
+                img = Image.open(imagefile)
+            except:
+                return f"{pos}Not an Image: '{imagefile}'"#TODO get a list of frames from videos
             img_w, img_h=img.size
             img_ar=img_h/img_w
             term_size=get_terminal_size()
@@ -457,15 +470,8 @@ class ICat:
             new_h=img_h/scale/2
             new_w=img_w/scale
             dx, dy=self.x, self.y
-            pos=""
-            if dx or dy:
-                if dx==0:
-                    dx=1
-                if dy==0:
-                    dy=1
-                pos=f'\x1b[{dy};{dx+1}H'
-
             if self.mode=="sixel":
+                img.close()
                 i=execute_command(['img2sixel', '-w', f'{int((new_w-1)*cell_w)}', '-h', f'{int(new_h*cell_h)}', imagefile])
                 return f"{pos}{i}"
             elif self.mode=="kitty":
@@ -473,6 +479,7 @@ class ICat:
                 # Generate a PNG stream
                 png_stream = io.BytesIO()
                 img.save(png_stream, format='PNG')
+                img.close()
                 png_stream.seek(0)
                 items={"a": "T", "f":100}#, "r":h, "c":w}
                 i=write_chunked(png_stream.getvalue(), items)
@@ -510,7 +517,11 @@ class ICat:
                     self.w=imgwidth
             for i in imagefile:
                 if len(i)>0:
-                    img, (imgwidth,imgheight)=self.openImage(i, int(screenrows), int(screencolumns))
+                    try:
+                        img, (imgwidth,imgheight)=self.openImage(i, int(screenrows), int(screencolumns))
+                    except:
+                        return f"{pos}Not an Image: '{imagefile}'"#TODO get a list of frames from videos
+                    img_w, img_h=img.size
                     if(img):
                         if img.height>maxy:
                             maxy=img.height
