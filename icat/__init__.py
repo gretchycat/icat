@@ -21,7 +21,7 @@ def get_terminal_size():
     }
     return window_info
 
-def execute_command(command, pipe=None):
+def execute_command(command, pipe=None, print=True):
     """
     Executes a command in the system and logs the command line and output.
     """
@@ -35,7 +35,10 @@ def execute_command(command, pipe=None):
             output+=line
         process.wait()
         process.output=output
-        return output
+        if print:
+            return output
+        else:
+            return ""#output
     except Exception as e:
         return f"Error running: {' '.join(command)}"
 
@@ -320,8 +323,8 @@ class ICat:
     def getVidFrame(self, videofile, time):
         vidframe=temp_output_path = tempfile.NamedTemporaryFile(delete=True, suffix=f".png").name
         maxtime=1
-        #try:
-        if True:
+        err=""
+        try:
             # Use subprocess to run ffmpeg and extract the frame
             command = [
                 "ffmpeg",
@@ -332,25 +335,28 @@ class ICat:
                 "-y",
                 vidframe
             ]
-            execute_command(command)
-        #/except:
-        #    return None
-        return vidframe
+            err=execute_command(command, pipe=None, print=False)
+        except:
+            return None, err
+        return vidframe, err
 
     def openImage(self, imagefile, lines, columns):
         self.vidframe=None
+        err=""
+        img0=None
         try:
             img0 = Image.open(imagefile).convert(mode='RGB')
         except Exception as e: #TODO try loading a video frame using ffmpeg
-            self.vidframe=self.getVidFrame(imagefile, 0.1)
+            self.vidframe, err=self.getVidFrame(imagefile, 0.1)
         if not img0 and self.vidframe:
             try:
                 img0 = Image.open(self.vidframe).convert(mode='RGB')
             except:
                 pass
         if not img0:
-            sys.stderr.write(f"Can't open {imagefile}\n")
-            return
+            #sys.stderr.write(f"{err}\n")
+            #sys.stderr.write(f"Can't open {imagefile}\n")
+            return None, (0,0), err
         if self.w==0:
             self.w=columns
         imageAR=img0.height/img0.width
@@ -400,7 +406,7 @@ class ICat:
         img0.close()
         if cropW>0 or cropH>0:
             termW, termH=cropW, cropH
-        return img, (termW, termH)
+        return img, (termW, termH), None
 
     def printLine(self, img, y, maxy, imgwidth):
         buffer=""
@@ -481,19 +487,23 @@ class ICat:
             imglist=[]
             img=None
             self.vidframe=None
+            err=""
             try:
                 img = Image.open(imagefile)
             except:
                 pass
             if not img:
-                self.vidframe=self.getVidFrame(imagefile, 0.1)
+                self.vidframe, err=self.getVidFrame(imagefile, 0.1)
             if not img and self.vidframe:
                 try:
                     img = Image.open(self.vidframe).convert(mode='RGB')
                 except:
                     pass
             if not img:
-                return f"{pos}Not an Image: '{imagefile}'"#TODO get a list of frames from videos
+                if err:
+                    return f'{pos}{err}'
+                else:
+                    return f"{pos}Not an Image: '{imagefile}'"#TODO get a list of frames from videos
             img_w, img_h=img.size
             img_ar=img_h/img_w
             term_size=get_terminal_size()
@@ -560,12 +570,16 @@ class ICat:
                 imgwidth=int(w/len(imagefile))-(1 if len(imagefile)>1 else 0)
                 if len(imagefile)>1:
                     self.w=imgwidth
+            err=""
             for i in imagefile:
                 if len(i)>0:
-                    try:
-                        img, (imgwidth,imgheight)=self.openImage(i, int(screenrows), int(screencolumns))
-                    except:
-                        return f"{pos}Not an Image: '{imagefile}'"#TODO get a list of frames from videos
+                    img, (imgwidth,imgheight), err=self.openImage(i, int(screenrows), int(screencolumns))
+                    if not img:
+                        if err:
+                            return f"{pos}{err}"
+                        else:
+                            return f"{pos}Not an Image: '{i}'"#TODO get a list of frames from videos
+
                     img_w, img_h=img.size
                     if(img):
                         if img.height>maxy:
