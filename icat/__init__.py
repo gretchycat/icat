@@ -1,4 +1,4 @@
-import math,io,os,sys,termios,tty,subprocess
+import math,io,os,sys,termios,tty,subprocess,tempfile
 from base64 import standard_b64encode
 from optparse import OptionParser
 #from icat import *
@@ -20,6 +20,24 @@ def get_terminal_size():
         "height": buf[3]
     }
     return window_info
+
+def execute_command(command, pipe=None):
+    """
+    Executes a command in the system and logs the command line and output.
+    """
+    try:
+        output=""
+        process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
+        if pipe:
+            process.stdin.write(pipe)
+        for line in process.stdout:
+            #logging.debug(line.rstrip('\n'))
+            output+=line
+        process.wait()
+        process.output=output
+        return output
+    except Exception as e:
+        return f"Error running: {' '.join(command)}"
 
 class ICat:
     def __init__(self,y=0, x=0, w=0, h=0, zoom='aspect', f=False, mode='24bit', charset='utf8', browse=False, place=True):
@@ -299,11 +317,39 @@ class ICat:
         else:
             return self.cs['b100']
 
+    def getVidFrame(self, videofile, time):
+        vidframe=temp_output_path = tempfile.NamedTemporaryFile(delete=True, suffix=f".png").name
+        maxtime=1
+        #try:
+        if True:
+            # Use subprocess to run ffmpeg and extract the frame
+            command = [
+                "ffmpeg",
+                "-i", videofile,
+                "-ss", str(time*maxtime),  # Specify the time in seconds
+                "-vframes:v", "1",  # Extract only 1 frame
+                #"-f", ".png",  # Output format
+                "-y",
+                vidframe
+            ]
+            execute_command(command)
+        #/except:
+        #    return None
+        return vidframe
+
     def openImage(self, imagefile, lines, columns):
+        self.vidframe=None
         try:
             img0 = Image.open(imagefile).convert(mode='RGB')
-        except Exception as e:
-            sys.stderr.write(str(e)+"\n")
+        except Exception as e: #TODO try loading a video frame using ffmpeg
+            self.vidframe=self.getVidFrame(imagefile, 0.1)
+        if not img0 and self.vidframe:
+            try:
+                img0 = Image.open(self.vidframe).convert(mode='RGB')
+            except:
+                pass
+        if not img0:
+            sys.stderr.write(f"Can't open {imagefile}\n")
             return
         if self.w==0:
             self.w=columns
@@ -420,24 +466,6 @@ class ICat:
                 items.clear()
             return out
 
-        def execute_command(command, pipe=None):
-            """
-            Executes a command in the system and logs the command line and output.
-            """
-            try:
-                output=""
-                process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, universal_newlines=True)
-                if pipe:
-                    process.stdin.write(pipe)
-                for line in process.stdout:
-                    #logging.debug(line.rstrip('\n'))
-                    output+=line
-                process.wait()
-                process.output=output
-                return output
-            except Exception as e:
-                return f"Error running: {' '.join(command)}"
-
         pos=""
         dx, dy=self.x, self.y
         if dx or dy:
@@ -451,9 +479,20 @@ class ICat:
             desc=""
             #image_size = f'\x1b[8;{h};{w}t'
             imglist=[]
+            img=None
+            self.vidframe=None
             try:
                 img = Image.open(imagefile)
             except:
+                pass
+            if not img:
+                self.vidframe=self.getVidFrame(imagefile, 0.1)
+            if not img and self.vidframe:
+                try:
+                    img = Image.open(self.vidframe).convert(mode='RGB')
+                except:
+                    pass
+            if not img:
                 return f"{pos}Not an Image: '{imagefile}'"#TODO get a list of frames from videos
             img_w, img_h=img.size
             img_ar=img_h/img_w
@@ -472,12 +511,18 @@ class ICat:
             dx, dy=self.x, self.y
             if self.mode=="sixel":
                 img.close()
-                i=execute_command(['img2sixel', '-w', f'{int((new_w-1)*cell_w)}', '-h', f'{int(new_h*cell_h)}', imagefile])
+                if self.vidframe:
+                    i=execute_command(['img2sixel', '-w', f'{int((new_w-1)*cell_w)}', '-h', f'{int(new_h*cell_h)}',self.vidframe])
+                    self.vidframe=None
+                else:
+                    i=execute_command(['img2sixel', '-w', f'{int((new_w-1)*cell_w)}', '-h', f'{int(new_h*cell_h)}', imagefile])
+                
                 return f"{pos}{i}"
             elif self.mode=="kitty":
                 img = img.resize((int(new_w*cell_w), int(new_h*cell_h)), Image.LANCZOS)
                 # Generate a PNG stream
                 png_stream = io.BytesIO()
+                self.vidframe=None
                 img.save(png_stream, format='PNG')
                 img.close()
                 png_stream.seek(0)
@@ -552,6 +597,7 @@ class ICat:
             for img in images:
                 if(img):
                     img.close()
+            self.vidframe=None
             if len(imagefile)>1:
                 if self.x>0:
                    buffer+=('\x1b['+str(dx)+'C')
