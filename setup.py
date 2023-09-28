@@ -8,7 +8,7 @@ shutil.copyfile('icat/__main__.py', 'icat/icat')
 
 setup(
     name='icat',
-    version='0.0.33',
+    version='0.0.34',
     license='GPL3',
     url='https://github.com/gretchycat/icat',
     author='Gretchen Maculo',
