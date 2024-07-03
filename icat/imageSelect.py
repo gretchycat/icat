@@ -1,7 +1,7 @@
 #!/usr/bin/python3
 import io, os, sys, math, termios, tty, subprocess, base64, time, select, shutil
 from optparse import OptionParser
-from icat import ICat 
+from icat import ICat
 from PIL import Image
 from base64 import standard_b64encode
 """
@@ -15,11 +15,11 @@ U+254x   ╀   ╁   ╂   ╃   ╄   ╅   ╆   ╇   ╈   ╉   ╊   ╋  
          0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
 U+255x   ═   ║   ╒   ╓   ╔   ╕   ╖   ╗   ╘   ╙   ╚   ╛   ╜   ╝   ╞   ╟
 U+256x   ╠   ╡   ╢   ╣   ╤   ╥   ╦   ╧   ╨   ╩   ╪   ╫   ╬   ╭   ╮   ╯
-U+257x   ╰   ╱   ╲   ╳   ╴   ╵   ╶   ╷   ╸   ╹   ╺   ╻   ╼   ╽   ╾   ╿ 
+U+257x   ╰   ╱   ╲   ╳   ╴   ╵   ╶   ╷   ╸   ╹   ╺   ╻   ╼   ╽   ╾   ╿
 
          0   1   2   3   4   5   6   7   8   9   A   B   C   D   E   F
 U+258x   ▀   ▁   ▂   ▃   ▄   ▅   ▆   ▇   █   ▉   ▊   ▋   ▌   ▍   ▎   ▏
-U+259x   ▐   ░   ▒   ▓   ▔   ▕   ▖   ▗   ▘   ▙   ▚   ▛   ▜   ▝   ▞   ▟ 
+U+259x   ▐   ░   ▒   ▓   ▔   ▕   ▖   ▗   ▘   ▙   ▚   ▛   ▜   ▝   ▞   ▟
 """
 
 def pause_terminal_output():
@@ -67,11 +67,11 @@ theme['curve']={
         }
 
 class boxDraw:
-    def __init__(self, bgColor=24, 
+    def __init__(self, bgColor=24,
                 chars="",
                 frameColors=[],
-                title="", statusBar='', 
-                mode='auto', charset='utf8', 
+                title="", statusBar='',
+                mode='auto', charset='utf8',
                 style='inside'):
         self.bgColor=bgColor
         if len(chars)!=9:
@@ -151,16 +151,16 @@ class boxDraw:
         b = int(hex_triplet[4:6], 16)
         return r, g, b
 
-    def color(self,fg,bg): 
+    def color(self,fg,bg):
         bgS=""
         fgS=""
         if type(fg)==int:
-            fgS=F"38;5;{fg}"    
+            fgS=F"38;5;{fg}"
         if type(fg)==str:
             (r,g,b)=self.getRGB(fg)
             fgS=F"38;2;{r};{g};{b}"
         if type(bg)==int:
-            bgS=F"48;5;{bg}"    
+            bgS=F"48;5;{bg}"
         if type(bg)==str:
             (r,g,b)=self.getRGB(bg)
             bgS=F"48;2;{r};{g};{b}"
@@ -245,7 +245,7 @@ class termKeyboard:
 
     def binread(self):
         return sys.stdin.buffer.read(1)
- 
+
     def read(self):
         try:
             return sys.stdin.read(1)
@@ -288,14 +288,16 @@ class termKeyboard:
                     while char>='0' and char<='9' or char==';':
                         char = self.read()
                         buffer+=char
-            
+
         # Restore the original settings of the terminal
         termios.tcsetattr(sys.stdin, termios.TCSADRAIN, filedescriptors)
         key=self.keymap.get(str(buffer))
         return key or str(buffer)
 
 class imageSelect:
-    def __init__(self):
+    def __init__(self, logger=None):
+        if logger:
+            self.logging=logger
         self.image_support=[]
         self.img_cache={}
         term=os.environ.get('TERM', '')
@@ -315,7 +317,7 @@ class imageSelect:
             if pipe:
                 process.stdin.write(pipe)
             for line in process.stdout:
-                #logging.debug(line.rstrip('\n'))
+                #self.logging.debug(line.rstrip('\n'))
                 output+=line
             process.wait()
             process.output=output
@@ -339,9 +341,9 @@ class imageSelect:
                 img = Image.open(image)
                 imgX,imgY=img.size
                 img.close()
-            except: 
+            except:
                 pass
-                #logging.WARNING(f"can't open {image} as an image.")
+                #self.logging.WARNING(f"can't open {image} as an image.")
             filename=os.path.basename(image)
             desc=f'({imgX}x{imgY}) {filename}'[:w]
             descX=int(x+(w/2)-(len(desc)/2))+1
@@ -349,7 +351,7 @@ class imageSelect:
             desc=f'\x1b[s\x1b[48;5;245;30m\x1b[{descY};{descX}H{desc}\n'
         start_pos = f'\x1b[{y};{x+1}H'
         if not self.img_cache.get(image):
-            ic=ICat(w=int(w), h=int(h), zoom='aspect', f=True, x=int(0), y=int(0), place=True, mode=mode, charset=charset) 
+            ic=ICat(w=int(w), h=int(h), zoom='aspect', f=True, x=int(0), y=int(0), place=True, mode=mode, charset=charset)
             self.img_cache[image]=ic.print(image)
         return f'{start_pos}{self.img_cache[image]}{desc}'
 
@@ -511,7 +513,7 @@ class imageSelect:
         return copied
 
 def main():
-    parser.add_option("-b", "--browse", action="store_true", dest="browse", 
+    parser.add_option("-b", "--browse", action="store_true", dest="browse",
             default=False, help="Show images in columns")
     parser.add_option('-t', '--target', dest='target', default='selected.png',
             help='the target filename for the image in browse mode.')

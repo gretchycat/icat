@@ -85,8 +85,8 @@ class ICat:
     def colormix(self, c1, c2, pct):#get a combined color for semisolid blocks
         if(pct<0 or pct>1):
             pct=0.5
-        return (c1[0]*pct+c2[0]*(1-pct), 
-                c1[1]*pct+c2[1]*(1-pct), 
+        return (c1[0]*pct+c2[0]*(1-pct),
+                c1[1]*pct+c2[1]*(1-pct),
                 c1[2]*pct+c2[2]*(1-pct))
 
     def get_palette(self):  #returns standard xterm256 terminal colors
@@ -132,7 +132,7 @@ class ICat:
                     return 0
                 return 7
             return c
-    
+
     def colordiff(self, c1, c2):  #compare how close two colors are
         return math.sqrt((c2[0]-c1[0])**2+(c2[1]-c1[1])**2+(c2[2]-c1[2])**2)
 
@@ -267,7 +267,7 @@ class ICat:
 
     def term_grey16(self, c):    #term16 greys with semisolids
         (r,g,b)=c
-        v=(r+g+b)/3 
+        v=(r+g+b)/3
         bl='X'
         fg="0;31"
         bg="41"
@@ -315,7 +315,7 @@ class ICat:
             return self.cs['b25']
         elif v<153:
             return self.cs['b50']
-        elif v<204: 
+        elif v<204:
             return self.cs['b75']
         else:
             return self.cs['b100']
@@ -399,10 +399,13 @@ class ICat:
         if(termH==0):
             h=int(w*img0.height/img0.width/2)
         termH=h
-        if self.F:
-            img=img0.resize((int(w),int(h)), resample=resample)
-        else:
-            img=img0.resize((int(w),int(h)*2), resample=resample)
+        try:
+            if self.F:
+                img=img0.resize((int(w),int(h)), resample=resample)
+            else:
+                img=img0.resize((int(w),int(h)*2), resample=resample)
+        except:
+            return None, (0,0) ,err
         img0.close()
         if cropW>0 or cropH>0:
             termW, termH=cropW, cropH
@@ -498,6 +501,7 @@ class ICat:
                 try:
                     img = Image.open(self.vidframe).convert(mode='RGB')
                 except:
+                    img = Image.open(self.vidframe).convert(mode='RGB')
                     pass
             if not img:
                 if err:
@@ -526,20 +530,22 @@ class ICat:
                     self.vidframe=None
                 else:
                     i=execute_command(['img2sixel', '-w', f'{int((new_w-1)*cell_w)}', '-h', f'{int(new_h*cell_h)}', imagefile])
-                
+
                 return f"{pos}{i}"
             elif self.mode=="kitty":
-                img = img.resize((int(new_w*cell_w), int(new_h*cell_h)), Image.LANCZOS)
-                # Generate a PNG stream
-                png_stream = io.BytesIO()
-                self.vidframe=None
-                img.save(png_stream, format='PNG')
-                img.close()
-                png_stream.seek(0)
-                items={"a": "T", "f":100}#, "r":h, "c":w}
-                i=write_chunked(png_stream.getvalue(), items)
-                png_stream.close()
-                return f"{pos}{i}"
+                try:
+                    img = img.resize((int(new_w*cell_w), int(new_h*cell_h)), Image.LANCZOS)
+                    # Generate a PNG stream
+                    png_stream = io.BytesIO()
+                    self.vidframe=None
+                    img.save(png_stream, format='PNG')
+                    img.close()
+                    png_stream.seek(0)
+                    items={"a": "T", "f":100}#, "r":h, "c":w}
+                    i=write_chunked(png_stream.getvalue(), items)
+                    png_stream.close()
+                    return f"{pos}{i}"
+                except:return f"{pos}Failed to resize image: '{imagefile}'"
         else:
             buffer=""
             if type(imagefile) is str:
@@ -617,5 +623,5 @@ class ICat:
                    buffer+=('\x1b['+str(dx)+'C')
                 for fn in imagefile:
                    buffer+=(self.centertext(os.path.basename(fn), imgwidth)+" ")
-            return buffer        
+            return buffer
 
