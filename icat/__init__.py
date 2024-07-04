@@ -491,17 +491,19 @@ class ICat:
             img=None
             self.vidframe=None
             err=""
-            try:
-                img = Image.open(imagefile)
-            except:
-                pass
+            if type(imagefile) is Image:
+                img=imagefile
+            if type(imagefile) is str:
+                try:
+                    img = Image.open(imagefile)
+                except:
+                    pass
             if not img:
                 self.vidframe, err=self.getVidFrame(imagefile, 0.1)
             if not img and self.vidframe:
                 try:
                     img = Image.open(self.vidframe).convert(mode='RGB')
                 except:
-                    img = Image.open(self.vidframe).convert(mode='RGB')
                     pass
             if not img:
                 if err:
