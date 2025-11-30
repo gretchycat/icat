@@ -10,8 +10,11 @@ except ImportError:
 
 def get_terminal_size():
     import array, fcntl, sys, termios
-    buf = array.array('H', [0, 0, 0, 0])
-    fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ, buf)
+    buf = array.array('H', [24, 80, 24, 80])
+    try:
+        fcntl.ioctl(sys.stdout, termios.TIOCGWINSZ, buf)
+    except:
+        pass
     # Create a dictionary with meaningful keys
     window_info = {
         "rows": buf[0],
