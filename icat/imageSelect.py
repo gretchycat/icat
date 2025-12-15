@@ -76,7 +76,7 @@ class boxDraw:
         self.bgColor=bgColor
         if len(chars)!=9:
             cd=grchr['utf8']
-            if charset.lower() in ['utf8', 'utf-8']:
+            if charset.lower() in ['utf8', 'utf-8', 'cp437']:
                 cd=grchr['utf8']
             else:
                 cd=grchr['ascii']
@@ -456,7 +456,10 @@ class imageSelect:
             drawBoxes=False
             fillBoxes=False
             pause_terminal_output()
-            sys.stdout.write(buffer)
+            if charset in ['cp437']:
+                sys.stdout.buffer.write(buffer.encode('cp437', errors='replace'))
+            else:
+                sys.stdout.write(buffer)
             sys.stdout.flush()
             resume_terminal_output()
             #print(F"{esc}[0,0H{esc}[0m{esc}[Kkey pressed: '{key.replace(esc, '<-')}'")
@@ -483,10 +486,15 @@ class imageSelect:
                     print(self.clear_images(), end='')
                     show=self.img_cache.get(images[selected])
                     self.img_cache[images[selected]]=False
-                    print(self.showImage(images[selected],\
+                    i=self.showImage(images[selected],\
                         w=int(screencolumns),\
                         h=int(screenrows), mode=mode, charset=charset)\
-                        +'-'*(int(screencolumns)))
+                        +'-'*(int(screencolumns))
+                    if charset in ['cp437']:
+                        sys.stdout.buffer.write(i.encode('cp437', errors='replace'))
+                        pass
+                    else:
+                        print(i)
                     self.img_cache[images[selected]]=show
                     print("\x1b[KSelect this media? (y/n)")
                     key=kb.read_keyboard_input()
