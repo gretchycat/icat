@@ -73,11 +73,24 @@ class ICat:
         self.set_charset(charset)
 
     def set_charset(self,charset):
-        if(charset in ('utf8','ascii')):
+        if(charset in ('utf8','ascii', 'cp437')):
             self.charset=charset
-            self.cs=dict([('b0',' '),('b25',u"\u2591"),
-                ('b50',u"\u2592"),('b75',u"\u2593"),('b100',u"\u2588"),
-                ('bT',u"\u2580"),('bB',u"\u2584"),('bL',u"\u258C"),('bR',u"\u2590")])
+            if charset=='utf8':
+                self.cs=dict([('b0',' '),('b25',u"\u2591"),
+                    ('b50',u"\u2592"),('b75',u"\u2593"),('b100',u"\u2588"),
+                    ('bT',u"\u2580"),('bB',u"\u2584"),('bL',u"\u258C"),('bR',u"\u2590")])
+            if charset == 'cp437':
+                self.cs = dict([
+                    ('b0',  ' '),    # 0% block (space)
+                    ('b25', '\xB0'), # 25% block ░
+                    ('b50', '\xB1'), # 50% block ▒
+                    ('b75', '\xB2'), # 75% block ▓
+                    ('b100','\xDB'), # full block █
+                    ('bT',  '\xDF'), # upper half block ▀
+                    ('bB',  '\xDC'), # lower half block ▄
+                    ('bL',  '\xDD'), # left half block ▌
+                    ('bR',  '\xDE')  # right half block ▐
+                ])
             if charset=="ascii":
                 self.cs=dict([('b0',' '),('b25',"."),
                         ('b50',"="),('b75','%'),('b100','@'),

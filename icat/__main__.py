@@ -1,3 +1,4 @@
+
 #!/usr/bin/python3
 import os,sys
 from optparse import OptionParser
@@ -18,7 +19,7 @@ def main():
     parser.add_option("-B", "--B", dest="columns" , default="1", 
             help="number of columns in browse mode")
     parser.add_option("-c", "--charset", dest="charset", default="utf8",
-            help="Character set: utf8 | ascii")
+            help="Character set: utf8 | ascii | cp437")
     parser.add_option("-x", '--x', dest="x", default="0", 
             help="shift the image to X")
     parser.add_option("-y", '--y', dest="y", default="0", 
