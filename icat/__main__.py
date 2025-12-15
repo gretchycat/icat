@@ -47,8 +47,7 @@ def main():
             if(options.charset=='utf8'):
                 print(ic.print(imagefile))
             else:
-                sys.stdout.buffer.write(data.encode('cp437', errors='replace'))
-                sys.stdout.buffer.write(ic.print(imagefile))
+                sys.stdout.buffer.write(ic.print(imagefile).encode('cp437', errors='replace'))
 
 if __name__ == "__main__":
     main()
