@@ -1,4 +1,3 @@
-
 #!/usr/bin/python3
 import os,sys
 from optparse import OptionParser
@@ -45,7 +44,10 @@ def main():
             ic=ICat(mode=options.mode.lower(), w=int(options.width), h=int(options.height), 
                 zoom=options.zoom, f=options.full, charset=options.charset.lower(),
                 x=int(options.x), y=int(options.y), browse=options.browse, place=options.place)
-            print(ic.print(imagefile))
+            if(options.charset=='utf8'):
+                print(ic.print(imagefile))
+            else:
+                sys.stdout.buffer.write(ic.print(imagefile))
 
 if __name__ == "__main__":
     main()

@@ -73,6 +73,9 @@ class ICat:
         self.set_charset(charset)
 
     def set_charset(self,charset):
+        self.cs=dict([('b0',' '),('b25',u"\u2591"),
+            ('b50',u"\u2592"),('b75',u"\u2593"),('b100',u"\u2588"),
+            ('bT',u"\u2580"),('bB',u"\u2584"),('bL',u"\u258C"),('bR',u"\u2590")])
         if(charset in ('utf8','ascii', 'cp437')):
             self.charset=charset
             if charset=='utf8':
