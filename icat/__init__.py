@@ -82,7 +82,7 @@ class ICat:
                 self.cs=dict([('b0',' '),('b25',u"\u2591"),
                     ('b50',u"\u2592"),('b75',u"\u2593"),('b100',u"\u2588"),
                     ('bT',u"\u2580"),('bB',u"\u2584"),('bL',u"\u258C"),('bR',u"\u2590")])
-            if charset == 'cp437':
+            if charset == 'cp437xx':
                 self.cs = dict([
                     ('b0',  ' '),    # 0% block (space)
                     ('b25', '\xB0'), # 25% block ░
